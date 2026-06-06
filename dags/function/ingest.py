@@ -3,6 +3,8 @@ import requests
 from dotenv import load_dotenv
 import pandas as pd
 from supabase import create_client
+from datetime import datetime
+import pytz
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../assets/.env'))
 
@@ -56,6 +58,8 @@ def fetch_openweather(lat: float, lon: float) -> dict:
 
 def ingest_all() -> pd.DataFrame:
     rows = []
+    bkk_tz = pytz.timezone("Asia/Bangkok")
+    created_at = datetime.now(bkk_tz).strftime('%Y-%m-%d %H:%M:%S')
     for station in fetch_air4thai():
         aqi_last = station['AQILast']
         lat = station['lat']
@@ -86,6 +90,7 @@ def ingest_all() -> pd.DataFrame:
             'so2_value':    aqi_last['SO2']['value'],
             'so2_aqi':      aqi_last['SO2']['aqi'],
             **ow,
+            'created_at': created_at,
         })
 
     return pd.DataFrame(rows)
