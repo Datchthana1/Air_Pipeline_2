@@ -5,6 +5,9 @@ import pandas as pd
 from supabase import create_client
 from datetime import datetime
 import pytz
+import re
+import logging
+from pprint import pprint
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../assets/.env'))
 
@@ -14,6 +17,14 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 air4thai_url      = "http://air4thai.pcd.go.th/services/getNewAQI_JSON.php"
 openweather_air   = "https://api.openweathermap.org/data/2.5/air_pollution"
 openweather_wx    = "https://api.openweathermap.org/data/2.5/weather"
+
+client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+import os
+
+def load_sql(filename: str) -> str:
+    path = os.path.join(os.path.dirname(__file__), '../../dags/sqlscript', filename)
+    return open(path).read()
 
 
 def fetch_air4thai() -> list:
@@ -97,7 +108,53 @@ def ingest_all() -> pd.DataFrame:
 
 
 def push_to_supabase(df: pd.DataFrame, table: str = "air_stations"):
-    client = create_client(SUPABASE_URL, SUPABASE_KEY)
     records = df.to_dict(orient='records')
     client.table(table).insert(records).execute()
     print(f"Pushed {len(records)} rows to '{table}'")
+
+
+def get_stationfromsupabase(table: str = 'air_stations'):
+    response = client.table(table).select('station_id').execute()
+    return list({row["station_id"] for row in response.data})
+
+def get_latest_created_at(table: str = 'air_stations') -> str:
+    response = client.table(table).select('created_at').order('created_at', desc=True).limit(1).execute()
+    if response.data:
+        return response.data[0]['created_at']
+    return None
+
+def truncate_all_stations():
+    sql = """
+    DO $$
+    DECLARE r RECORD;
+    BEGIN
+      FOR r IN SELECT tablename FROM pg_tables
+               WHERE schemaname = 'public' AND tablename LIKE 'station_%'
+      LOOP
+        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);
+      END LOOP;
+    END;
+    $$;
+    """
+    client.rpc('exec_sql', {'sql': sql}).execute()
+    logging.info("Truncated all station_* tables")
+
+def transform_station(station_id: str, snapshot_at: str = None, date_from: str = None, date_to: str = None):
+    tbl = 'station_' + re.sub(r'[^a-zA-Z0-9]', '_', station_id)
+
+    if snapshot_at:
+        date_filter = f"AND created_at = '{snapshot_at}'"
+    elif date_from and date_to:
+        date_filter = f"AND created_at::date BETWEEN '{date_from}' AND '{date_to}'"
+    elif date_from:
+        date_filter = f"AND created_at::date = '{date_from}'"
+    else:
+        date_filter = ""
+
+    sql = load_sql('air-station-transform.sql').format(
+        tbl=tbl,
+        station_id=station_id,
+        date_filter=date_filter,
+    )
+    client.rpc('exec_sql', {'sql': sql}).execute()
+    logging.info(f"Transformed station {station_id} → {tbl} [{snapshot_at or date_filter or 'full dump'}]")

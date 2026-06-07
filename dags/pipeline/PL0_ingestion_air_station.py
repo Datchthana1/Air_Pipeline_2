@@ -1,5 +1,6 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.decorators import task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.timetables.interval import CronDataIntervalTimetable
 from datetime import datetime, timedelta
 import pendulum
@@ -15,14 +16,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-def run_ingest():
-    df = ingest_all()
-    push_to_supabase(df)
-    logging.info(f"Ingested {len(df)} rows successfully")
-    
-
 with DAG(
-    dag_id="PL0_ingestion_air_station_daily",
+    dag_id="PL0_ingestion_air_station",
     default_args=default_args,
     description="Ingest air quality data from AIR4Thai and OpenWeather to Supabase",
     schedule=CronDataIntervalTimetable(
@@ -31,7 +26,17 @@ with DAG(
     ),
     catchup=False,
 ) as dag:
-    ingest_task = PythonOperator(
-        task_id="ingest_openweather_air4thai",
-        python_callable=run_ingest,
+
+    @task
+    def ingest():
+        df = ingest_all()
+        push_to_supabase(df)
+        logging.info(f"Ingested {len(df)} rows successfully")
+
+    trigger_transform = TriggerDagRunOperator(
+        task_id="trigger_transform_pipeline",
+        trigger_dag_id="PL1_transform_air_station",
+        wait_for_completion=False,
     )
+
+    ingest() >> trigger_transform
