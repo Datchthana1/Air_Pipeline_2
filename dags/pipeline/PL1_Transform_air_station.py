@@ -4,7 +4,7 @@ from airflow.models.param import Param
 from datetime import datetime, timedelta
 import pendulum
 import logging
-from function.ingest import get_stationfromsupabase, get_latest_created_at, transform_station, truncate_all_stations
+from function.ingest import get_stationfromsupabase, transform_station, truncate_all_stations
 
 local_tz = pendulum.timezone("Asia/Bangkok")
 
@@ -36,16 +36,12 @@ with DAG(
             truncate_all_stations()
             return []
 
-        snapshot_at = get_latest_created_at()
         stations = get_stationfromsupabase()
-        logging.info(f"Found {len(stations)} stations | snapshot_at={snapshot_at}")
-        return [{"station_id": s, "snapshot_at": snapshot_at} for s in stations]
+        logging.info(f"Found {len(stations)} stations | processing latest snapshot")
+        return [{"station_id": s} for s in stations]
 
     @task
     def transform(item: dict):
-        transform_station(
-            station_id=item["station_id"],
-            snapshot_at=item["snapshot_at"],
-        )
+        transform_station(station_id=item["station_id"])
 
     transform.expand(item=get_inputs())

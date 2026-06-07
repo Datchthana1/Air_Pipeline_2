@@ -109,7 +109,7 @@ def ingest_all() -> pd.DataFrame:
 
 def push_to_supabase(df: pd.DataFrame, table: str = "air_stations"):
     records = df.to_dict(orient='records')
-    client.table(table).insert(records).execute()
+    client.table(table).upsert(records, on_conflict='station_id,recorded_at').execute()
     print(f"Pushed {len(records)} rows to '{table}'")
 
 
@@ -142,7 +142,9 @@ def truncate_all_stations():
 def transform_station(station_id: str, snapshot_at: str = None, date_from: str = None, date_to: str = None):
     tbl = 'station_' + re.sub(r'[^a-zA-Z0-9]', '_', station_id)
 
-    if snapshot_at:
+    if snapshot_at == 'latest' or (snapshot_at is None and date_from is None and date_to is None):
+        date_filter = "AND created_at = (SELECT MAX(created_at) FROM air_stations)"
+    elif snapshot_at:
         date_filter = f"AND created_at = '{snapshot_at}'"
     elif date_from and date_to:
         date_filter = f"AND created_at::date BETWEEN '{date_from}' AND '{date_to}'"
