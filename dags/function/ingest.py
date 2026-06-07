@@ -113,9 +113,9 @@ def push_to_supabase(df: pd.DataFrame, table: str = "air_stations"):
     print(f"Pushed {len(records)} rows to '{table}'")
 
 
-def get_stationfromsupabase(table: str = 'air_stations'):
-    response = client.table(table).select('station_id').execute()
-    return list({row["station_id"] for row in response.data})
+def get_stationfromsupabase():
+    response = client.rpc('get_distinct_stations', {}).execute()
+    return [row['station_id'] for row in response.data]
 
 def get_latest_created_at(table: str = 'air_stations') -> str:
     response = client.table(table).select('created_at').order('created_at', desc=True).limit(1).execute()
