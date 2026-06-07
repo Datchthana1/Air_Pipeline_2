@@ -22,7 +22,7 @@ def run_ingest():
     
 
 with DAG(
-    dag_id="PL0_ingestion_air_station",
+    dag_id="PL0_ingestion_air_station_daily",
     default_args=default_args,
     description="Ingest air quality data from AIR4Thai and OpenWeather to Supabase",
     schedule=CronDataIntervalTimetable(
