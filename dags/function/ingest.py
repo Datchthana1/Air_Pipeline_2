@@ -1,12 +1,12 @@
 import os
 import requests
-from dotenv import load_dotenv
 import pandas as pd
-from supabase import create_client
-from datetime import datetime
 import pytz
 import re
 import logging
+from dotenv import load_dotenv
+from supabase import create_client
+from datetime import datetime
 from pprint import pprint
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../assets/.env'))

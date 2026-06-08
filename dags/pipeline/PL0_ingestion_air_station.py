@@ -3,9 +3,9 @@ from airflow.decorators import task
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.timetables.interval import CronDataIntervalTimetable
 from datetime import datetime, timedelta
+from function.ingest import ingest_all, push_to_supabase
 import pendulum
 import logging
-from function.ingest import ingest_all, push_to_supabase
 
 local_tz = pendulum.timezone("Asia/Bangkok")
 

@@ -2,9 +2,9 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.models.param import Param
 from datetime import datetime, timedelta
+from function.ingest import get_stationfromsupabase, transform_station, truncate_all_stations
 import pendulum
 import logging
-from function.ingest import get_stationfromsupabase, transform_station, truncate_all_stations
 
 local_tz = pendulum.timezone("Asia/Bangkok")
 
