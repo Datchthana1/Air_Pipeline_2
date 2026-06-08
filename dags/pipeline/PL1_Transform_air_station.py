@@ -43,5 +43,11 @@ with DAG(
     @task
     def transform(item: dict):
         transform_station(station_id=item["station_id"])
+        return f'transformed station {item["station_id"]} succeed'
 
-    transform.expand(item=get_inputs())
+    @task
+    def summary(results: list):
+        for r in results:
+            logging.info(r)
+
+    summary(transform.expand(item=get_inputs()))
