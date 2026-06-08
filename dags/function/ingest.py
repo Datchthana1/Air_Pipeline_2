@@ -46,16 +46,21 @@ def fetch_openweather(lat: float, lon: float) -> dict:
     air_data = air.json()['list'][0]
     wx_data  = weather.json()
 
+    # µg/m³ → ppb: ppb = µg/m³ × 24.45 / MW  (25°C, 1 atm)
+    # CO: ppb → ppm (÷1000) เพื่อให้ตรงกับ AIR4Thai
+    c = air_data['components']
+    def to_ppb(ugm3, mw): return round(ugm3 * 24.45 / mw, 4)
+
     return {
         "ow_aqi":         air_data['main']['aqi'],
-        "ow_co":          air_data['components']['co'],
-        "ow_no":          air_data['components']['no'],
-        "ow_no2":         air_data['components']['no2'],
-        "ow_o3":          air_data['components']['o3'],
-        "ow_so2":         air_data['components']['so2'],
-        "ow_pm25":        air_data['components']['pm2_5'],
-        "ow_pm10":        air_data['components']['pm10'],
-        "ow_nh3":         air_data['components']['nh3'],
+        "ow_co":          round(to_ppb(c['co'],   28) / 1000, 6),  # ppm
+        "ow_no":          to_ppb(c['no'],          30),              # ppb
+        "ow_no2":         to_ppb(c['no2'],         46),              # ppb
+        "ow_o3":          to_ppb(c['o3'],          48),              # ppb
+        "ow_so2":         to_ppb(c['so2'],         64),              # ppb
+        "ow_pm25":        c['pm2_5'],                                 # µg/m³ (ไม่ต้องแปลง)
+        "ow_pm10":        c['pm10'],                                  # µg/m³ (ไม่ต้องแปลง)
+        "ow_nh3":         to_ppb(c['nh3'],         17),              # ppb
         "ow_temp":        wx_data['main']['temp'],
         "ow_feels_like":  wx_data['main']['feels_like'],
         "ow_humidity":    wx_data['main']['humidity'],
