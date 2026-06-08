@@ -48,6 +48,6 @@ with DAG(
     @task
     def summary(results: list):
         for r in results:
-            logging.info(r)
+            logging.debug(r)
 
     summary(transform.expand(item=get_inputs()))
