@@ -21,7 +21,7 @@ with DAG(
     default_args=default_args,
     description="Ingest air quality data from AIR4Thai and OpenWeather to Supabase",
     schedule=CronDataIntervalTimetable(
-        cron="30 * * * *",
+        cron="45 * * * *",
         timezone=local_tz,
     ),
     catchup=False,
