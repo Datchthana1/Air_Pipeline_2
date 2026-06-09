@@ -49,5 +49,6 @@ with DAG(
     def summary(results: list):
         for r in results:
             logging.debug(r)
+            return r
 
     summary(transform.expand(item=get_inputs()))
