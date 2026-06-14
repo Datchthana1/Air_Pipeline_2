@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.models.param import Param
 from datetime import datetime, timedelta
-from function.ingest import get_stationfromsupabase, transform_station, truncate_all_stations
+from function.ingest import transform_all, truncate_all_stations
 import pendulum
 import logging
 
@@ -18,7 +18,7 @@ default_args = {
 with DAG(
     dag_id="PL1_transform_air_station",
     default_args=default_args,
-    description="Transform air quality data per station into separate tables",
+    description="Transform air quality data per station into separate tables (single server-side batch)",
     schedule=None,
     catchup=False,
     params={
@@ -31,24 +31,13 @@ with DAG(
 ) as dag:
 
     @task
-    def get_inputs(**context) -> list:
+    def run_transform(**context) -> str:
         if context["params"]["truncate"]:
             truncate_all_stations()
-            return []
+            return "truncated all station tables"
 
-        stations = get_stationfromsupabase()
-        logging.info(f"Found {len(stations)} stations | processing latest snapshot")
-        return [{"station_id": s} for s in stations]
+        # One server-side call transforms every station in the latest snapshot.
+        count = transform_all('latest')
+        return f"transformed {count} stations (batch)"
 
-    @task
-    def transform(item: dict):
-        transform_station(station_id=item["station_id"])
-        return f'transformed station {item["station_id"]} succeed'
-
-    @task
-    def summary(results: list):
-        for r in results:
-            logging.debug(r)
-            return r
-
-    summary(transform.expand(item=get_inputs()))
+    run_transform()

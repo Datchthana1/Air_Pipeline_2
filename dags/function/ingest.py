@@ -141,6 +141,20 @@ def truncate_all_stations():
     client.rpc('exec_sql', {'sql': sql}).execute()
     logging.info("Truncated all station_* tables")
 
+def transform_all(snapshot: str = 'latest') -> int:
+    """Transform every station for `snapshot` in a single server-side call.
+
+    Calls the transform_all_stations() Postgres function (see
+    dags/sqlscript/transform-all-stations.sql), which loops the stations inside
+    the database — one round-trip instead of one per station. Returns the number
+    of stations processed.
+    """
+    response = client.rpc('transform_all_stations', {'p_snapshot': snapshot}).execute()
+    count = response.data
+    logging.info(f"Batch-transformed {count} stations [{snapshot}]")
+    return count
+
+
 def transform_station(station_id: str, snapshot_at: str = None, date_from: str = None, date_to: str = None):
     tbl = 'station_' + re.sub(r'[^a-zA-Z0-9]', '_', station_id)
 
