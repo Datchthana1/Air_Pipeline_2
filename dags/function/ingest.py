@@ -33,6 +33,34 @@ def fetch_air4thai() -> list:
     return response.json()['stations']
 
 
+# Thailand PM2.5 → AQI breakpoints (µg/m³ low, high, AQI low, high).
+# Reference: https://aqihub.info/indices/thailand
+_PM25_BREAKPOINTS = [
+    (0.0, 15.0, 0, 25),
+    (15.1, 25.0, 26, 50),
+    (25.1, 37.5, 51, 100),
+    (37.6, 75.0, 101, 200),
+    (75.1, 150.0, 201, 300),
+    (150.1, 250.0, 301, 400),
+    (250.1, 500.0, 401, 500),
+]
+
+
+def calculate_aqi_pm25(pm25):
+    """Convert a PM2.5 concentration (µg/m³) to a Thailand AQI (0–500).
+
+    OpenWeather's air_pollution `main.aqi` is only a 1–5 category, so we derive
+    a real AQI from the reported pm2_5 concentration instead.
+    """
+    if pm25 is None:
+        return None
+    pm25 = round(float(pm25), 1)
+    for bp_lo, bp_hi, aqi_lo, aqi_hi in _PM25_BREAKPOINTS:
+        if bp_lo <= pm25 <= bp_hi:
+            return round((aqi_hi - aqi_lo) / (bp_hi - bp_lo) * (pm25 - bp_lo) + aqi_lo)
+    return 500 if pm25 > 500.0 else 0
+
+
 def fetch_openweather(lat: float, lon: float) -> dict:
     api_key = os.getenv("OPENWEATHER_API_KEY")
     params  = {"lat": lat, "lon": lon, "appid": api_key}
@@ -49,7 +77,8 @@ def fetch_openweather(lat: float, lon: float) -> dict:
     c = air_data['components']
 
     return {
-        "ow_aqi":         air_data['main']['aqi'],
+        # Derived from PM2.5 so it's a real 0–500 AQI, not OpenWeather's 1–5 band.
+        "ow_aqi":         calculate_aqi_pm25(c['pm2_5']),
         "ow_co":          c['co'],
         "ow_no":          c['no'],
         "ow_no2":         c['no2'],
