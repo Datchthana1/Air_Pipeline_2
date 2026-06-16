@@ -5,3 +5,5 @@ assets/**/.env
 __pycache__/
 *.pyc
 .claude
+
+NextAction.md

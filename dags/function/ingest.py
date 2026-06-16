@@ -2,12 +2,10 @@ import os
 import requests
 import pandas as pd
 import pytz
-import re
 import logging
 from dotenv import load_dotenv
 from supabase import create_client
 from datetime import datetime
-from pprint import pprint
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../assets/.env'))
 
@@ -19,12 +17,6 @@ openweather_air   = "https://api.openweathermap.org/data/2.5/air_pollution"
 openweather_wx    = "https://api.openweathermap.org/data/2.5/weather"
 
 client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-import os
-
-def load_sql(filename: str) -> str:
-    path = os.path.join(os.path.dirname(__file__), '../../dags/sqlscript', filename)
-    return open(path).read()
 
 
 def fetch_air4thai() -> list:
@@ -185,23 +177,23 @@ def transform_all(snapshot: str = 'latest') -> int:
 
 
 def transform_station(station_id: str, snapshot_at: str = None, date_from: str = None, date_to: str = None):
-    tbl = 'station_' + re.sub(r'[^a-zA-Z0-9]', '_', station_id)
+    """Transform a single station via the parameterized transform_station() RPC.
 
-    if snapshot_at == 'latest' or (snapshot_at is None and date_from is None and date_to is None):
-        date_filter = "AND created_at = (SELECT MAX(created_at) FROM air_stations)"
-    elif snapshot_at:
-        date_filter = f"AND created_at = '{snapshot_at}'"
-    elif date_from and date_to:
-        date_filter = f"AND created_at::date BETWEEN '{date_from}' AND '{date_to}'"
-    elif date_from:
-        date_filter = f"AND created_at::date = '{date_from}'"
-    else:
-        date_filter = ""
-
-    sql = load_sql('air-station-transform.sql').format(
-        tbl=tbl,
-        station_id=station_id,
-        date_filter=date_filter,
+    Every filter is passed as a TYPED argument, so no SQL string is built in
+    Python and there is no injection surface (unlike the old exec_sql approach;
+    see dags/sqlscript/air-station-transform.sql). Used for ad-hoc re-runs and
+    date-range backfills; the regular run uses transform_all_stations().
+    Returns the number of rows inserted.
+    """
+    response = client.rpc('transform_station', {
+        'p_station_id':  station_id,
+        'p_snapshot_at': snapshot_at,
+        'p_date_from':   date_from,
+        'p_date_to':     date_to,
+    }).execute()
+    count = response.data
+    logging.info(
+        f"Transformed station {station_id} → {count} rows "
+        f"[{snapshot_at or date_from or 'full dump'}]"
     )
-    client.rpc('exec_sql', {'sql': sql}).execute()
-    logging.info(f"Transformed station {station_id} → {tbl} [{snapshot_at or date_filter or 'full dump'}]")
+    return count
