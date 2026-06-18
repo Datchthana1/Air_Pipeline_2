@@ -1,16 +1,7 @@
-"""Shared reload controls for every pipeline (PL0/PL1/PL2).
-
-reload_params() returns the Param set exposed on each DAG's manual trigger;
-RELOAD_CONF is the templated conf an upstream DAG passes to the next one so a
-reload window cascades down the whole chain. resolve_reload() (in ingest.py)
-reads either source back inside a task.
-"""
-
 from airflow.models.param import Param
 
 
 def reload_params(default_mode: str = "latest") -> dict:
-    """Reload controls for a DAG: mode + the dates/station each mode needs."""
     return {
         "reload_mode": Param(
             default=default_mode,

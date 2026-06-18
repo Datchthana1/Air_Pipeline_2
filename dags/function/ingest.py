@@ -37,11 +37,6 @@ _PM25_BREAKPOINTS = [
 
 
 def calculate_aqi_pm25(pm25):
-    """Convert a PM2.5 concentration (µg/m³) to a Thailand AQI (0–500).
-
-    OpenWeather's air_pollution `main.aqi` is only a 1–5 category, so we derive
-    a real AQI from the reported pm2_5 concentration instead.
-    """
     if pm25 is None:
         return None
     pm25 = round(float(pm25), 1)
@@ -160,13 +155,6 @@ def truncate_all_stations():
     logging.info("Truncated all station_* tables")
 
 def resolve_reload(context) -> dict:
-    """Resolve reload settings for a DAG run.
-
-    Reads dag_run.conf first (set when an upstream DAG triggers this one and
-    cascades the reload window down the chain), then falls back to the DAG's
-    own params (set on a manual trigger). Returns mode/date/date_from/date_to/
-    station_id, with empty strings normalised to None.
-    """
     dag_run = context.get("dag_run")
     conf = (dag_run.conf if dag_run and dag_run.conf else None) or {}
     params = context.get("params") or {}
@@ -188,14 +176,6 @@ def resolve_reload(context) -> dict:
 
 def transform_all(mode: str = 'latest', date: str = None, date_from: str = None,
                   date_to: str = None, station_id: str = None) -> int:
-    """Transform stations into the per-station tables in one server-side call.
-
-    Calls transform_all_stations() (see dags/sqlscript/transform-all-stations.sql),
-    which loops the stations inside the database. `mode` selects the window:
-    latest snapshot (normal run), a single day, a date range, or a full dump;
-    `station_id` optionally scopes to one station. Returns the number of stations
-    processed.
-    """
     response = client.rpc('transform_all_stations', {
         'p_mode':       mode,
         'p_date':       date or None,
@@ -210,14 +190,6 @@ def transform_all(mode: str = 'latest', date: str = None, date_from: str = None,
 
 def build_dim_fact(mode: str = 'full', date: str = None, date_from: str = None,
                   date_to: str = None, station_id: str = None) -> int:
-    """Build the star-schema mart (PL2) from the per-station tables.
-
-    Calls build_dim_fact() (see dags/sqlscript/build-dim-fact.sql), which unions
-    every station_* table and upserts dim_station, dim_date and fact_air_quality
-    inside the database. `mode`/dates/`station_id` reload the same windows as
-    transform_all(). The mart is what WebResume reads from, instead of the raw
-    air_stations bucket. Returns the number of fact rows upserted.
-    """
     response = client.rpc('build_dim_fact', {
         'p_mode':       mode,
         'p_date':       date or None,
@@ -231,14 +203,6 @@ def build_dim_fact(mode: str = 'full', date: str = None, date_from: str = None,
 
 
 def transform_station(station_id: str, snapshot_at: str = None, date_from: str = None, date_to: str = None):
-    """Transform a single station via the parameterized transform_station() RPC.
-
-    Every filter is passed as a TYPED argument, so no SQL string is built in
-    Python and there is no injection surface (unlike the old exec_sql approach;
-    see dags/sqlscript/air-station-transform.sql). Used for ad-hoc re-runs and
-    date-range backfills; the regular run uses transform_all_stations().
-    Returns the number of rows inserted.
-    """
     response = client.rpc('transform_station', {
         'p_station_id':  station_id,
         'p_snapshot_at': snapshot_at,

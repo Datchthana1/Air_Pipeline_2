@@ -1,26 +1,6 @@
--- ===========================================================================
--- PL2 — Build the star-schema mart (dim_station + dim_date + fact_air_quality).
--- Run this ONCE in the Supabase SQL Editor (same project as air_stations).
---
--- Source = the per-station `station_*` tables produced by PL1 (NOT air_stations).
--- This keeps the layering clean:
---     air_stations (raw)  ->  PL1  ->  station_* (cleaned, per station)
---                                       ->  PL2  ->  dim_station / dim_date / fact_air_quality
--- WebResume then reads from this mart, never from the raw bucket.
---
--- The function unions every `station_%` table inside Postgres (one round-trip),
--- mirroring the dynamic-SQL style of transform_all_stations(). It is idempotent:
--- dimensions are upserted (SCD type-1) and facts are keyed on
--- (station_id, recorded_at), so re-runs only add/refresh rows.
--- ===========================================================================
-
--- ---------------------------------------------------------------------------
--- Dimension + fact tables (created up front so the schema is explicit and
--- doesn't depend on a successful first run to exist).
--- ---------------------------------------------------------------------------
 create table if not exists dim_station (
   station_key  bigint generated always as identity primary key,
-  station_id   text unique not null,          -- natural / business key
+  station_id   text unique not null,
   area_th      text,
   area_en      text,
   location     text,
@@ -31,16 +11,16 @@ create table if not exists dim_station (
 );
 
 create table if not exists dim_date (
-  date_key     int  primary key,              -- YYYYMMDD
+  date_key     int  primary key,
   full_date    date not null unique,
   year         int,
   quarter      int,
   month        int,
   month_name   text,
   day          int,
-  day_of_week  int,                           -- ISO: 1 = Monday .. 7 = Sunday
+  day_of_week  int,
   day_name     text,
-  week_of_year int,                           -- ISO week
+  week_of_year int,
   is_weekend   boolean
 );
 
@@ -48,10 +28,9 @@ create table if not exists fact_air_quality (
   fact_key     bigint generated always as identity primary key,
   station_key  bigint not null references dim_station(station_key),
   date_key     int    not null references dim_date(date_key),
-  station_id   text   not null,               -- degenerate dimension (eases joins/upserts)
-  recorded_at  timestamp not null,            -- measurement time (Asia/Bangkok, naive)
-  created_at   timestamp,                     -- ingestion snapshot time
-  -- Air4Thai measures
+  station_id   text   not null,
+  recorded_at  timestamp not null,
+  created_at   timestamp,
   aqi          numeric, aqi_param text,
   pm25_value   numeric, pm25_aqi numeric,
   pm10_value   numeric, pm10_aqi numeric,
@@ -59,7 +38,6 @@ create table if not exists fact_air_quality (
   co_value     numeric, co_aqi   numeric,
   no2_value    numeric, no2_aqi  numeric,
   so2_value    numeric, so2_aqi  numeric,
-  -- OpenWeather measures
   ow_aqi       numeric, ow_no numeric, ow_no2 numeric, ow_o3 numeric,
   ow_so2       numeric, ow_pm25 numeric, ow_pm10 numeric, ow_nh3 numeric,
   ow_temp      numeric, ow_feels_like numeric, ow_humidity numeric,
@@ -74,7 +52,6 @@ create index if not exists idx_fact_created
   on fact_air_quality (created_at desc);
 
 
--- Drop the previous no-arg signature so PostgREST doesn't see two overloads.
 drop function if exists build_dim_fact();
 
 create or replace function build_dim_fact(
@@ -89,21 +66,12 @@ language plpgsql
 security definer
 set search_path = public
 as $$
--- RELOAD MODES (p_mode), applied to the staged station_* rows:
---   'full' (default) → rebuild the whole mart
---   'latest'         → only the newest snapshot (created_at = MAX) — used by the normal run
---   'day'            → only readings recorded on p_date           (recorded_at::date = p_date)
---   'range'          → only readings between p_date_from..p_date_to (recorded_at::date)
--- Optionally scope to ONE station with p_station_id.
 declare
   r       record;
   v_union text := '';
-  v_cond  text;          -- mode/station predicate, columns qualified with s.
+  v_cond  text;
   v_count int  := 0;
 begin
-  -- 1. Union every per-station table (the "separated stations" from PL1).
-  --    Each table is first self-healed to guarantee the aqi columns exist, so
-  --    PL2 works even on station_* tables PL1 hasn't re-touched yet.
   for r in
     select tablename from pg_tables
     where schemaname = 'public' and tablename like 'station_%'
@@ -128,18 +96,12 @@ begin
       FROM %I$u$, r.tablename);
   end loop;
 
-  -- No station_* tables yet → nothing to build.
   if v_union = '' then
     return 0;
   end if;
 
-  -- 2. Stage the union once. recorded_at/created_at are TEXT in station_*; cast
-  --    to real timestamps here so the mart is properly typed (rows with an
-  --    unparseable / null recorded_at are dropped — they can't be placed in time).
   execute 'create temp table _src on commit drop as ' || v_union;
 
-  -- 2b. Build the mode/station predicate (columns qualified with s. so it can be
-  --     dropped straight into every statement, incl. the joined fact insert).
   if p_mode = 'day' and p_date is not null and p_date <> '' then
     v_cond := format('s.recorded_at::date = %L', p_date);
   elsif p_mode = 'range' and p_date_from is not null and p_date_from <> ''
@@ -148,14 +110,12 @@ begin
   elsif p_mode = 'latest' then
     v_cond := 's.created_at = (SELECT MAX(created_at) FROM _src)';
   else
-    -- 'full' (default)
     v_cond := 'TRUE';
   end if;
   if p_station_id is not null and p_station_id <> '' then
     v_cond := v_cond || format(' AND s.station_id = %L', p_station_id);
   end if;
 
-  -- 3. dim_station — one row per station, SCD type-1 (latest attributes win).
   execute format($f$
     insert into dim_station (station_id, area_th, area_en, location, station_type, lat, lon)
     select distinct on (s.station_id)
@@ -173,7 +133,6 @@ begin
       updated_at   = now()
   $f$, v_cond);
 
-  -- 4. dim_date — one row per calendar day present in the (filtered) data.
   execute format($f$
     insert into dim_date (date_key, full_date, year, quarter, month, month_name,
                           day, day_of_week, day_name, week_of_year, is_weekend)
@@ -197,7 +156,6 @@ begin
     on conflict (date_key) do nothing
   $f$, v_cond);
 
-  -- 5. fact_air_quality — one row per (station, recorded_at) measurement.
   execute format($f$
     insert into fact_air_quality (
       station_key, date_key, station_id, recorded_at, created_at,

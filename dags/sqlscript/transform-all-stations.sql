@@ -1,25 +1,3 @@
--- ===========================================================================
--- Server-side batch transform: process EVERY station in one call.
--- Run this ONCE in the Supabase SQL Editor (same project as air_stations).
---
--- Replaces the old "one exec_sql round-trip per station" pattern: instead of
--- ~178 network calls (which ran sequentially under Airflow's SequentialExecutor),
--- Airflow now makes a SINGLE call to this function, and the per-station loop runs
--- inside Postgres (DB-local, no network per station).
---
--- Mirrors air-station-transform.sql (schema + validation/SPLIT_PART transform),
--- but loops over all stations in the target window. This function is the
--- source of truth for the regular run AND for reloads.
---
--- RELOAD MODES (p_mode):
---   'latest' (default) → the most recent ingestion snapshot (created_at = MAX) — normal run
---   'day'              → all readings recorded on p_date          (recorded_at::date = p_date)
---   'range'            → all readings between p_date_from..p_date_to (recorded_at::date)
---   'full'             → every row (full dump)
--- Optionally scope to ONE station with p_station_id (else every station).
--- ===========================================================================
-
--- Drop the previous single-arg signature so PostgREST doesn't see two overloads.
 drop function if exists transform_all_stations(text);
 
 create or replace function transform_all_stations(
@@ -41,7 +19,6 @@ declare
   v_tbl    text;
   v_count  int := 0;
 begin
-  -- Which rows to (re)process. Every literal is escaped with %L → no injection.
   if p_mode = 'day' and p_date is not null and p_date <> '' then
     v_filter := format('recorded_at::date = %L', p_date);
   elsif p_mode = 'range' and p_date_from is not null and p_date_from <> ''
@@ -50,22 +27,18 @@ begin
   elsif p_mode = 'full' then
     v_filter := 'TRUE';
   else
-    -- 'latest' (default): the newest ingestion snapshot.
     v_filter := 'created_at = (SELECT MAX(created_at) FROM air_stations)';
   end if;
 
-  -- Optionally restrict to a single station.
   if p_station_id is not null and p_station_id <> '' then
     v_scope := format(' AND station_id = %L', p_station_id);
   end if;
 
-  -- Only stations that actually have rows in this window (skips dead ids).
   for r in execute
     format('SELECT DISTINCT station_id FROM air_stations WHERE %s%s', v_filter, v_scope)
   loop
     v_tbl := 'station_' || regexp_replace(r.station_id, '[^a-zA-Z0-9]', '_', 'g');
 
-    -- Create the per-station table if it doesn't exist yet.
     execute format($f$
       CREATE TABLE IF NOT EXISTS %I (
         id            BIGINT,
@@ -94,11 +67,9 @@ begin
       )
     $f$, v_tbl);
 
-    -- Backfill the overall-AQI columns onto tables created before they existed.
     execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi NUMERIC',     v_tbl);
     execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi_param TEXT',  v_tbl);
 
-    -- Insert this station's validated rows for the chosen snapshot.
     execute format($f$
       INSERT INTO %I (
         id, station_id, area_th, area_en, location, station_type, lat, lon,
@@ -127,7 +98,6 @@ begin
         CASE WHEN no2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE no2_aqi::numeric   END,
         CASE WHEN so2_value::numeric  NOT BETWEEN 0 AND 600 THEN 0 ELSE so2_value::numeric END,
         CASE WHEN so2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE so2_aqi::numeric   END,
-        -- Overall AQI: keep the real index (0–500+); air4thai uses -1 for "no reading" → NULL.
         CASE WHEN aqi::numeric < 0 THEN NULL ELSE aqi::numeric END,
         aqi_param,
         ow_aqi, ow_no, ow_no2, ow_o3, ow_so2, ow_pm25, ow_pm10, ow_nh3,
@@ -136,7 +106,6 @@ begin
         recorded_at, created_at
       FROM air_stations
       WHERE station_id = %L AND %s
-      -- Overwrite on conflict so a reload actually re-cleans existing rows.
       ON CONFLICT (station_id, recorded_at) DO UPDATE SET
         id = EXCLUDED.id, area_th = EXCLUDED.area_th, area_en = EXCLUDED.area_en,
         location = EXCLUDED.location, station_type = EXCLUDED.station_type,

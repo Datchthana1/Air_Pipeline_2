@@ -1,18 +1,3 @@
--- ===========================================================================
--- Single-station transform (ad-hoc / date-range backfill).
--- Run this ONCE in the Supabase SQL Editor to (re)create the function.
---
--- Parameterized version of the old air-station-transform.sql template: instead
--- of Python building a SQL string and shipping it through the catch-all
--- exec_sql() RPC (an injection surface), all filtering is passed as TYPED
--- arguments. The function escapes every literal with format(%L) / %I, so there
--- is no way for a station id or date to break out of the query.
---
--- Mirrors transform_all_stations() (same schema + validation/SPLIT_PART), but
--- for ONE station. The regular hourly run uses transform_all_stations(); this is
--- kept for ad-hoc re-runs and date-range backfills.
--- ===========================================================================
-
 create or replace function transform_station(
   p_station_id  text,
   p_snapshot_at text default null,
@@ -27,8 +12,6 @@ declare
   v_tbl    text;
   v_count  int;
 begin
-  -- Decide which rows of this station to transform. Every literal is escaped
-  -- with %L, so p_snapshot_at / p_date_* can never inject SQL.
   if p_snapshot_at = 'latest'
      or (p_snapshot_at is null and p_date_from is null and p_date_to is null) then
     v_filter := 'created_at = (SELECT MAX(created_at) FROM air_stations)';
@@ -44,7 +27,6 @@ begin
 
   v_tbl := 'station_' || regexp_replace(p_station_id, '[^a-zA-Z0-9]', '_', 'g');
 
-  -- Create the per-station table if it doesn't exist yet.
   execute format($f$
     CREATE TABLE IF NOT EXISTS %I (
       id            BIGINT,
@@ -73,11 +55,9 @@ begin
     )
   $f$, v_tbl);
 
-  -- Backfill the overall-AQI columns onto tables created before they existed.
   execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi NUMERIC',    v_tbl);
   execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi_param TEXT', v_tbl);
 
-  -- Insert this station's validated rows for the chosen filter.
   execute format($f$
     INSERT INTO %I (
       id, station_id, area_th, area_en, location, station_type, lat, lon,
@@ -106,7 +86,6 @@ begin
       CASE WHEN no2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE no2_aqi::numeric   END,
       CASE WHEN so2_value::numeric  NOT BETWEEN 0 AND 600 THEN 0 ELSE so2_value::numeric END,
       CASE WHEN so2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE so2_aqi::numeric   END,
-      -- Overall AQI: keep the real index (0–500+); air4thai uses -1 for "no reading" → NULL.
       CASE WHEN aqi::numeric < 0 THEN NULL ELSE aqi::numeric END,
       aqi_param,
       ow_aqi, ow_no, ow_no2, ow_o3, ow_so2, ow_pm25, ow_pm10, ow_nh3,
