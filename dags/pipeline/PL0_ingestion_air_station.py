@@ -3,7 +3,8 @@ from airflow.decorators import task
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.timetables.interval import CronDataIntervalTimetable
 from datetime import datetime, timedelta
-from function.ingest import ingest_all, push_to_supabase
+from function.ingest import ingest_all, push_to_supabase, resolve_reload
+from function.reload_params import reload_params, RELOAD_CONF
 import pendulum
 import logging
 
@@ -25,10 +26,19 @@ with DAG(
         timezone=local_tz,
     ),
     catchup=False,
+    params=reload_params(default_mode="latest"),
 ) as dag:
 
     @task
-    def ingest():
+    def ingest(**context):
+        r = resolve_reload(context)
+        if r["mode"] != "latest":
+            logging.warning(
+                "AIR4Thai serves only the current reading, so ingestion cannot "
+                "backfill history. Pulling current data; the '%s' reload window "
+                "is cascaded to PL1/PL2 to re-process already-ingested rows.",
+                r["mode"],
+            )
         df = ingest_all()
         push_to_supabase(df)
         logging.info(f"Ingested {len(df)} rows successfully")
@@ -36,6 +46,7 @@ with DAG(
     trigger_transform = TriggerDagRunOperator(
         task_id="trigger_transform_pipeline",
         trigger_dag_id="PL1_transform_air_station",
+        conf=RELOAD_CONF,
         wait_for_completion=False,
     )
 

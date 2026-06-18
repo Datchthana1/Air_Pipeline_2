@@ -25,8 +25,6 @@ def fetch_air4thai() -> list:
     return response.json()['stations']
 
 
-# Thailand PM2.5 → AQI breakpoints (µg/m³ low, high, AQI low, high).
-# Reference: https://aqihub.info/indices/thailand
 _PM25_BREAKPOINTS = [
     (0.0, 15.0, 0, 25),
     (15.1, 25.0, 26, 50),
@@ -69,7 +67,6 @@ def fetch_openweather(lat: float, lon: float) -> dict:
     c = air_data['components']
 
     return {
-        # Derived from PM2.5 so it's a real 0–500 AQI, not OpenWeather's 1–5 band.
         "ow_aqi":         calculate_aqi_pm25(c['pm2_5']),
         "ow_co":          c['co'],
         "ow_no":          c['no'],
@@ -162,17 +159,74 @@ def truncate_all_stations():
     client.rpc('exec_sql', {'sql': sql}).execute()
     logging.info("Truncated all station_* tables")
 
-def transform_all(snapshot: str = 'latest') -> int:
-    """Transform every station for `snapshot` in a single server-side call.
+def resolve_reload(context) -> dict:
+    """Resolve reload settings for a DAG run.
 
-    Calls the transform_all_stations() Postgres function (see
-    dags/sqlscript/transform-all-stations.sql), which loops the stations inside
-    the database — one round-trip instead of one per station. Returns the number
-    of stations processed.
+    Reads dag_run.conf first (set when an upstream DAG triggers this one and
+    cascades the reload window down the chain), then falls back to the DAG's
+    own params (set on a manual trigger). Returns mode/date/date_from/date_to/
+    station_id, with empty strings normalised to None.
     """
-    response = client.rpc('transform_all_stations', {'p_snapshot': snapshot}).execute()
+    dag_run = context.get("dag_run")
+    conf = (dag_run.conf if dag_run and dag_run.conf else None) or {}
+    params = context.get("params") or {}
+
+    def pick(key, default=None):
+        value = conf.get(key)
+        if value is None or value == "":
+            value = params.get(key, default)
+        return value if value not in ("", None) else default
+
+    return {
+        "mode":       pick("reload_mode", "latest"),
+        "date":       pick("reload_date"),
+        "date_from":  pick("date_from"),
+        "date_to":    pick("date_to"),
+        "station_id": pick("station_id"),
+    }
+
+
+def transform_all(mode: str = 'latest', date: str = None, date_from: str = None,
+                  date_to: str = None, station_id: str = None) -> int:
+    """Transform stations into the per-station tables in one server-side call.
+
+    Calls transform_all_stations() (see dags/sqlscript/transform-all-stations.sql),
+    which loops the stations inside the database. `mode` selects the window:
+    latest snapshot (normal run), a single day, a date range, or a full dump;
+    `station_id` optionally scopes to one station. Returns the number of stations
+    processed.
+    """
+    response = client.rpc('transform_all_stations', {
+        'p_mode':       mode,
+        'p_date':       date or None,
+        'p_date_from':  date_from or None,
+        'p_date_to':    date_to or None,
+        'p_station_id': station_id or None,
+    }).execute()
     count = response.data
-    logging.info(f"Batch-transformed {count} stations [{snapshot}]")
+    logging.info(f"Batch-transformed {count} stations [{mode}]")
+    return count
+
+
+def build_dim_fact(mode: str = 'full', date: str = None, date_from: str = None,
+                  date_to: str = None, station_id: str = None) -> int:
+    """Build the star-schema mart (PL2) from the per-station tables.
+
+    Calls build_dim_fact() (see dags/sqlscript/build-dim-fact.sql), which unions
+    every station_* table and upserts dim_station, dim_date and fact_air_quality
+    inside the database. `mode`/dates/`station_id` reload the same windows as
+    transform_all(). The mart is what WebResume reads from, instead of the raw
+    air_stations bucket. Returns the number of fact rows upserted.
+    """
+    response = client.rpc('build_dim_fact', {
+        'p_mode':       mode,
+        'p_date':       date or None,
+        'p_date_from':  date_from or None,
+        'p_date_to':    date_to or None,
+        'p_station_id': station_id or None,
+    }).execute()
+    count = response.data
+    logging.info(f"Built dim/fact mart: {count} fact rows [{mode}]")
     return count
 
 

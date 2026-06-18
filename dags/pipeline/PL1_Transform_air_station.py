@@ -1,8 +1,10 @@
 from airflow import DAG
 from airflow.decorators import task
 from airflow.models.param import Param
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
-from function.ingest import transform_all, truncate_all_stations
+from function.ingest import transform_all, truncate_all_stations, resolve_reload
+from function.reload_params import reload_params, RELOAD_CONF
 import pendulum
 import logging
 
@@ -22,6 +24,7 @@ with DAG(
     schedule=None,
     catchup=False,
     params={
+        **reload_params(default_mode="latest"),
         "truncate": Param(
             default=False,
             type="boolean",
@@ -36,8 +39,21 @@ with DAG(
             truncate_all_stations()
             return "truncated all station tables"
 
-        # One server-side call transforms every station in the latest snapshot.
-        count = transform_all('latest')
-        return f"transformed {count} stations (batch)"
+        r = resolve_reload(context)
+        count = transform_all(
+            mode=r["mode"],
+            date=r["date"],
+            date_from=r["date_from"],
+            date_to=r["date_to"],
+            station_id=r["station_id"],
+        )
+        return f"transformed {count} stations [{r['mode']}]"
 
-    run_transform()
+    trigger_dim_fact = TriggerDagRunOperator(
+        task_id="trigger_build_dim_fact",
+        trigger_dag_id="PL2_build_dim_fact",
+        conf=RELOAD_CONF,
+        wait_for_completion=False,
+    )
+
+    run_transform() >> trigger_dim_fact

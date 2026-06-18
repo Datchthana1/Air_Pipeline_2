@@ -61,6 +61,7 @@ begin
       co_value      NUMERIC, co_aqi   NUMERIC,
       no2_value     NUMERIC, no2_aqi  NUMERIC,
       so2_value     NUMERIC, so2_aqi  NUMERIC,
+      aqi           NUMERIC, aqi_param TEXT,
       ow_aqi        NUMERIC, ow_no NUMERIC, ow_no2 NUMERIC, ow_o3 NUMERIC,
       ow_so2        NUMERIC, ow_pm25 NUMERIC, ow_pm10 NUMERIC, ow_nh3 NUMERIC,
       ow_temp       NUMERIC, ow_feels_like NUMERIC, ow_humidity NUMERIC,
@@ -72,6 +73,10 @@ begin
     )
   $f$, v_tbl);
 
+  -- Backfill the overall-AQI columns onto tables created before they existed.
+  execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi NUMERIC',    v_tbl);
+  execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi_param TEXT', v_tbl);
+
   -- Insert this station's validated rows for the chosen filter.
   execute format($f$
     INSERT INTO %I (
@@ -79,6 +84,7 @@ begin
       pm25_value, pm25_aqi, pm10_value, pm10_aqi,
       o3_value, o3_aqi, co_value, co_aqi,
       no2_value, no2_aqi, so2_value, so2_aqi,
+      aqi, aqi_param,
       ow_aqi, ow_no, ow_no2, ow_o3, ow_so2, ow_pm25, ow_pm10, ow_nh3,
       ow_temp, ow_feels_like, ow_humidity, ow_pressure,
       ow_wind_speed, ow_wind_deg, ow_clouds, ow_weather,
@@ -100,6 +106,9 @@ begin
       CASE WHEN no2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE no2_aqi::numeric   END,
       CASE WHEN so2_value::numeric  NOT BETWEEN 0 AND 600 THEN 0 ELSE so2_value::numeric END,
       CASE WHEN so2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN 0 ELSE so2_aqi::numeric   END,
+      -- Overall AQI: keep the real index (0–500+); air4thai uses -1 for "no reading" → NULL.
+      CASE WHEN aqi::numeric < 0 THEN NULL ELSE aqi::numeric END,
+      aqi_param,
       ow_aqi, ow_no, ow_no2, ow_o3, ow_so2, ow_pm25, ow_pm10, ow_nh3,
       ow_temp, ow_feels_like, ow_humidity, ow_pressure,
       ow_wind_speed, ow_wind_deg, ow_clouds, ow_weather,
