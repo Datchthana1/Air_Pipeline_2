@@ -16,6 +16,8 @@
 create or replace function transform_all_stations(p_snapshot text default 'latest')
 returns int
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   r        record;
