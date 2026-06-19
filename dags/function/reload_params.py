@@ -9,10 +9,10 @@ def reload_params(default_mode: str = "latest") -> dict:
             enum=["latest", "day", "range", "full"],
             description="latest=snapshot ล่าสุด | day=วันเดียว | range=ช่วงวันที่ | full=ทั้งหมด",
         ),
-        "reload_date": Param(default="", type="string", description="โหมด day: YYYY-MM-DD"),
-        "date_from":   Param(default="", type="string", description="โหมด range: YYYY-MM-DD (เริ่ม)"),
-        "date_to":     Param(default="", type="string", description="โหมด range: YYYY-MM-DD (สิ้นสุด)"),
-        "station_id":  Param(default="", type="string", description="เจาะจง 1 สถานี (เว้นว่าง=ทุกสถานี)"),
+        "reload_date": Param(default="", type=["null", "string"], description="โหมด day: YYYY-MM-DD"),
+        "date_from":   Param(default="", type=["null", "string"], description="โหมด range: YYYY-MM-DD (เริ่ม)"),
+        "date_to":     Param(default="", type=["null", "string"], description="โหมด range: YYYY-MM-DD (สิ้นสุด)"),
+        "station_id":  Param(default="", type=["null", "string"], description="เจาะจง 1 สถานี (เว้นว่าง=ทุกสถานี)"),
     }
 
 
