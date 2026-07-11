@@ -132,7 +132,10 @@ def process_report(report_data: dict) -> pd.DataFrame:
 
 
 def push_events_to_supabase(df: pd.DataFrame, table: str = "earthquake_events") -> int:
-    records = df.to_dict(orient='records')
+    deduped = df.drop_duplicates(subset=['datetime_utc', 'lat', 'lon'], keep='first')
+    if len(deduped) < len(df):
+        logging.info(f"Dropped {len(df) - len(deduped)} duplicate events on (datetime_utc, lat, lon)")
+    records = deduped.to_dict(orient='records')
     client.table(table).upsert(records, on_conflict='datetime_utc,lat,lon').execute()
     logging.info(f"Pushed {len(records)} earthquake events to '{table}'")
     return len(records)
