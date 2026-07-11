@@ -17,9 +17,6 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-# Cap how many stations run concurrently. Each transform_station() call is a
-# short, cheap RPC now, but Supabase still has a finite connection/pool
-# limit -- this keeps 100+ stations from all opening a connection at once.
 MAX_CONCURRENT_STATIONS = 5
 
 with DAG(
@@ -46,8 +43,6 @@ with DAG(
 
     @task
     def run_truncate(**context) -> bool:
-        """Runs first. If truncate=True, wipes all station_* tables and the
-        rest of the DAG (station fan-out) is skipped for this run."""
         if context["params"]["truncate"]:
             truncate_all_stations()
             return True
@@ -55,9 +50,6 @@ with DAG(
 
     @task
     def get_stations(did_truncate: bool, **context) -> list:
-        """One cheap indexed query -> list of station_ids to transform this
-        run. Empty list if we just truncated (nothing to backfill) or if the
-        reload window matched no rows."""
         if did_truncate:
             return []
         r = resolve_reload(context)
@@ -71,9 +63,6 @@ with DAG(
 
     @task(max_active_tis_per_dagrun=MAX_CONCURRENT_STATIONS)
     def transform_one_station(station_id: str, **context) -> str:
-        """The actual chunk: transforms exactly ONE station in one short
-        transaction. This replaces the old single all-station RPC call --
-        it's the fix for the statement_timeout, not just a wrapper around it."""
         r = resolve_reload(context)
         count = transform_station(
             station_id=station_id,

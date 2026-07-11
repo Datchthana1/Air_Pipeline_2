@@ -1,12 +1,3 @@
--- transform_station: process ONE station in ONE short transaction.
--- This is the engine both transform_all_stations() (manual/ad-hoc use) and
--- the PL1 Airflow DAG (per-station dynamic task mapping) call into.
--- Splitting the work this way is what actually fixes the
--- "canceling statement due to statement timeout" errors: each call now does
--- a bounded amount of work (one station's rows) instead of scanning/writing
--- every station in a single statement whose runtime grows with total data
--- volume every time PL0 ingests a new hourly batch.
-
 drop function if exists transform_station(text, text, date, date);
 
 create or replace function transform_station(
@@ -135,10 +126,6 @@ $$;
 grant execute on function transform_station(text, text, text, text, text) to anon, authenticated, service_role;
 
 
--- get_distinct_stations: cheap lookup used by the Airflow "get_stations" task
--- to build the list of station_ids to fan out over. Same filter semantics as
--- transform_all_stations/transform_station so the set of stations processed
--- stays identical to what the old all-at-once function would have picked up.
 drop function if exists get_distinct_stations();
 drop function if exists get_distinct_stations(text, text, text, text, text);
 

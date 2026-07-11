@@ -176,9 +176,6 @@ def resolve_reload(context) -> dict:
 
 def transform_all(mode: str = 'latest', date: str = None, date_from: str = None,
                   date_to: str = None, station_id: str = None) -> int:
-    """Kept for manual/ad-hoc use only. Runs every station inside ONE RPC
-    call/transaction, so it is still subject to statement_timeout on large
-    data volumes. PL1 no longer calls this — see list_stations()/transform_station()."""
     response = client.rpc('transform_all_stations', {
         'p_mode':       mode,
         'p_date':       date or None,
@@ -193,9 +190,6 @@ def transform_all(mode: str = 'latest', date: str = None, date_from: str = None,
 
 def list_stations(mode: str = 'latest', date: str = None, date_from: str = None,
                    date_to: str = None, station_id: str = None) -> list:
-    """Cheap lookup (single indexed scan) of which station_ids PL1 needs to
-    process for the given reload window. Feeds Airflow dynamic task mapping
-    so each station gets its own short-lived transform_station() call."""
     response = client.rpc('get_distinct_stations', {
         'p_mode':       mode,
         'p_date':       date or None,
@@ -224,10 +218,6 @@ def build_dim_fact(mode: str = 'full', date: str = None, date_from: str = None,
 
 def transform_station(station_id: str, mode: str = 'latest', date: str = None,
                        date_from: str = None, date_to: str = None) -> int:
-    """Transforms ONE station in one short RPC call/transaction. This is the
-    per-station chunk PL1 fans out over via dynamic task mapping — each call
-    only ever scans/writes one station's rows, so runtime stays bounded no
-    matter how much data has accumulated across all stations."""
     response = client.rpc('transform_station', {
         'p_station_id': station_id,
         'p_mode':       mode,
