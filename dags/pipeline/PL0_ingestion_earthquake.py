@@ -18,7 +18,7 @@ default_args = {
 with DAG(
     dag_id='PL0_ingestion_earthquake',
     default_args=default_args,
-    schedule_interval='@daily',
+    schedule_interval='@hourly',
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['PL0', 'Ingest', 'EQ', 'earthquake'],
