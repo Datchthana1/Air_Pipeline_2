@@ -8,6 +8,7 @@ from function.ingest_earthquake import (
     fetch_report_api,
     push_report_to_supabase,
 )
+from function.reload_params import reload_params, EARTHQUAKE_RELOAD_CONF
 
 default_args = {
     'owner': 'airflow',
@@ -22,6 +23,7 @@ with DAG(
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['PL0', 'Ingest', 'EQ', 'earthquake'],
+    params=reload_params(default_mode="latest", include_station_id=False),
 ) as dag:
 
     @task()
@@ -40,7 +42,7 @@ with DAG(
     trigger_PL1_transform = TriggerDagRunOperator(
         task_id='trigger_PL1_transform',
         trigger_dag_id='PL1_transform_earthquake',
-        conf={'reload_mode': 'latest'},
+        conf=EARTHQUAKE_RELOAD_CONF,
         wait_for_completion=False,
     )
 

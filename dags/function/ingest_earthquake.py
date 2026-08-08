@@ -66,6 +66,31 @@ def get_latest_report(table: str = "earthquake_reports_raw") -> dict:
     return response.data[0]['payload']
 
 
+def get_reports(mode: str = 'latest', date: str = None, date_from: str = None,
+                 date_to: str = None, table: str = "earthquake_reports_raw") -> list:
+    """Return raw report payloads to (re)process, picked from what's already
+    in `table` by `fetched_at`. This reprocesses history already captured by
+    the pipeline - the TMD API itself has no date/range parameter, so it
+    can't be asked for data from before the pipeline started polling it.
+    """
+    if mode == 'latest':
+        return [get_latest_report(table)]
+
+    query = client.table(table).select('payload').order('fetched_at')
+    if mode == 'day' and date:
+        query = query.gte('fetched_at', f"{date} 00:00:00").lte('fetched_at', f"{date} 23:59:59")
+    elif mode == 'range' and date_from and date_to:
+        query = query.gte('fetched_at', f"{date_from} 00:00:00").lte('fetched_at', f"{date_to} 23:59:59")
+    elif mode != 'full':
+        raise AirflowException(
+            f"reload_mode={mode!r} needs a date (for 'day') or date_from/date_to (for 'range')"
+        )
+
+    response = query.execute()
+    logging.info(f"{len(response.data)} report(s) to reprocess [{mode}]")
+    return [row['payload'] for row in response.data]
+
+
 _LOCATION_RE = re.compile(r'(?:ต\.(?P<tambon>.+?)\s+)?(?:อ\.(?P<amphoe>.+?)\s+)?จ\.(?P<province>.+?)\s*\(')
 
 
@@ -102,6 +127,12 @@ def _parse_location(title_th):
     return tambon, amphoe, province, (location_en or None)
 
 
+_EVENT_COLUMNS = [
+    'datetime_utc', 'datetime_thai', 'magnitude', 'depth_km', 'lat', 'lon',
+    'title_th', 'tambon_th', 'amphoe_th', 'province_th', 'location_en', 'is_domestic',
+]
+
+
 def process_report(report_data: dict) -> pd.DataFrame:
     rows = []
     for event in report_data.get('DailyEarthquakes', []):
@@ -121,7 +152,10 @@ def process_report(report_data: dict) -> pd.DataFrame:
             'location_en':   location_en,
             'is_domestic':   province is not None,
         })
-    df = pd.DataFrame(rows)
+    # Explicit `columns=` keeps an empty report (0 events - a quiet day, or a
+    # report reprocessed from a range with no matches) from producing a
+    # columnless DataFrame that .astype() below would reject.
+    df = pd.DataFrame(rows, columns=_EVENT_COLUMNS)
     return df.astype({
         'depth_km':    'Int64',
         'magnitude':   'float64',
@@ -131,7 +165,17 @@ def process_report(report_data: dict) -> pd.DataFrame:
     })
 
 
+def process_reports(reports: list) -> pd.DataFrame:
+    frames = [process_report(r) for r in reports]
+    if not frames:
+        return process_report({})
+    return pd.concat(frames, ignore_index=True)
+
+
 def push_events_to_supabase(df: pd.DataFrame, table: str = "earthquake_events") -> int:
+    if df.empty:
+        logging.info("No events to push - nothing in range")
+        return 0
     deduped = df.drop_duplicates(subset=['datetime_utc', 'lat', 'lon'], keep='first')
     if len(deduped) < len(df):
         logging.info(f"Dropped {len(df) - len(deduped)} duplicate events on (datetime_utc, lat, lon)")
