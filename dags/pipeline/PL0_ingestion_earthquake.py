@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
@@ -14,6 +14,8 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
 }
 
 with DAG(

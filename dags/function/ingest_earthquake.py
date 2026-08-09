@@ -17,7 +17,7 @@ def check_api_connection() -> None:
             EARTHQUAKE_API_URL,
             headers={'Content-Type': 'application/json'},
             params=EARTHQUAKE_API_PARAMS,
-            timeout=10,
+            timeout=30,
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:

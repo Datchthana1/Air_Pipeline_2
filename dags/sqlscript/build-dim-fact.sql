@@ -72,6 +72,8 @@ declare
   v_cond  text;
   v_count int  := 0;
 begin
+  set local statement_timeout = '300s';
+
   for r in
     select tablename from pg_tables
     where schemaname = 'public' and tablename like 'station_%'
