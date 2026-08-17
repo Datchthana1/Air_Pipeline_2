@@ -1,3 +1,26 @@
+-- Casts raw TEXT sensor readings to NUMERIC without ever raising: a
+-- non-numeric value (empty string, 'N/A', sensor placeholder) or a value
+-- outside [lo, hi] both come back NULL instead of aborting the INSERT
+-- this is used in.
+create or replace function safe_numeric(v text, lo numeric, hi numeric)
+returns numeric
+language plpgsql
+immutable
+as $$
+begin
+  if v is null or v !~ '^-?\d+(\.\d+)?$' then
+    return null;
+  end if;
+  if v::numeric not between lo and hi then
+    return null;
+  end if;
+  return v::numeric;
+end;
+$$;
+
+grant execute on function safe_numeric(text, numeric, numeric) to anon, authenticated, service_role;
+
+
 drop function if exists transform_station(text, text, date, date);
 
 create or replace function transform_station(
@@ -78,19 +101,19 @@ begin
       id, station_id, area_th, area_en,
       TRIM(SPLIT_PART(area_en, ',', -1)) AS location,
       station_type, lat, lon,
-      CASE WHEN pm25_value::numeric NOT BETWEEN 0 AND 900 THEN NULL ELSE pm25_value::numeric END,
-      CASE WHEN pm25_aqi::numeric   NOT BETWEEN 0 AND 300 THEN NULL ELSE pm25_aqi::numeric  END,
-      CASE WHEN pm10_value::numeric NOT BETWEEN 0 AND 900 THEN NULL ELSE pm10_value::numeric END,
-      CASE WHEN pm10_aqi::numeric   NOT BETWEEN 0 AND 300 THEN NULL ELSE pm10_aqi::numeric  END,
-      CASE WHEN o3_value::numeric   NOT BETWEEN 0 AND 900 THEN NULL ELSE o3_value::numeric  END,
-      CASE WHEN o3_aqi::numeric     NOT BETWEEN 0 AND 300 THEN NULL ELSE o3_aqi::numeric    END,
-      CASE WHEN co_value::numeric   NOT BETWEEN 0 AND 900 THEN NULL ELSE co_value::numeric  END,
-      CASE WHEN co_aqi::numeric     NOT BETWEEN 0 AND 300 THEN NULL ELSE co_aqi::numeric    END,
-      CASE WHEN no2_value::numeric  NOT BETWEEN 0 AND 900 THEN NULL ELSE no2_value::numeric END,
-      CASE WHEN no2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN NULL ELSE no2_aqi::numeric   END,
-      CASE WHEN so2_value::numeric  NOT BETWEEN 0 AND 600 THEN NULL ELSE so2_value::numeric END,
-      CASE WHEN so2_aqi::numeric    NOT BETWEEN 0 AND 300 THEN NULL ELSE so2_aqi::numeric   END,
-      CASE WHEN aqi::numeric < 0 THEN NULL ELSE aqi::numeric END,
+      safe_numeric(pm25_value::text, 0, 900),
+      safe_numeric(pm25_aqi::text,   0, 500),
+      safe_numeric(pm10_value::text, 0, 900),
+      safe_numeric(pm10_aqi::text,   0, 500),
+      safe_numeric(o3_value::text,   0, 900),
+      safe_numeric(o3_aqi::text,     0, 500),
+      safe_numeric(co_value::text,   0, 900),
+      safe_numeric(co_aqi::text,     0, 500),
+      safe_numeric(no2_value::text,  0, 900),
+      safe_numeric(no2_aqi::text,    0, 500),
+      safe_numeric(so2_value::text,  0, 600),
+      safe_numeric(so2_aqi::text,    0, 500),
+      safe_numeric(aqi::text,        0, 500),
       aqi_param,
       ow_aqi, ow_co, ow_no, ow_no2, ow_o3, ow_so2, ow_pm25, ow_pm10, ow_nh3,
       ow_temp, ow_feels_like, ow_humidity, ow_pressure,

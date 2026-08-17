@@ -84,45 +84,69 @@ def fetch_openweather(lat: float, lon: float) -> dict:
 
 def ingest_all() -> pd.DataFrame:
     rows = []
+    skipped = 0
     bkk_tz = pytz.timezone("Asia/Bangkok")
     created_at = datetime.now(bkk_tz).strftime('%Y-%m-%d %H:%M:%S')
-    for station in fetch_air4thai():
-        aqi_last = station['AQILast']
-        lat = station['lat']
-        lon = station['long']
+    stations = fetch_air4thai()
+    for station in stations:
+        station_id = station.get('stationID', '<unknown>')
+        try:
+            aqi_last = station['AQILast']
+            lat = station['lat']
+            lon = station['long']
 
-        ow = fetch_openweather(lat, lon)
+            ow = fetch_openweather(lat, lon)
 
-        rows.append({
-            'station_id':   station['stationID'],
-            'area_th':      station['areaTH'],
-            'area_en':      station['areaEN'],
-            'station_type': station['stationType'],
-            'lat':          float(lat),
-            'lon':          float(lon),
-            'recorded_at':  f"{aqi_last['date']} {aqi_last['time']}",
-            'aqi':          aqi_last['AQI']['aqi'],
-            'aqi_param':    aqi_last['AQI']['param'],
-            'pm25_value':   aqi_last['PM25']['value'],
-            'pm25_aqi':     aqi_last['PM25']['aqi'],
-            'pm10_value':   aqi_last['PM10']['value'],
-            'pm10_aqi':     aqi_last['PM10']['aqi'],
-            'o3_value':     aqi_last['O3']['value'],
-            'o3_aqi':       aqi_last['O3']['aqi'],
-            'co_value':     aqi_last['CO']['value'],
-            'co_aqi':       aqi_last['CO']['aqi'],
-            'no2_value':    aqi_last['NO2']['value'],
-            'no2_aqi':      aqi_last['NO2']['aqi'],
-            'so2_value':    aqi_last['SO2']['value'],
-            'so2_aqi':      aqi_last['SO2']['aqi'],
-            **ow,
-            'created_at': created_at,
-        })
+            rows.append({
+                'station_id':   station['stationID'],
+                'area_th':      station['areaTH'],
+                'area_en':      station['areaEN'],
+                'station_type': station['stationType'],
+                'lat':          float(lat),
+                'lon':          float(lon),
+                'recorded_at':  f"{aqi_last['date']} {aqi_last['time']}",
+                'aqi':          aqi_last['AQI']['aqi'],
+                'aqi_param':    aqi_last['AQI']['param'],
+                'pm25_value':   aqi_last['PM25']['value'],
+                'pm25_aqi':     aqi_last['PM25']['aqi'],
+                'pm10_value':   aqi_last['PM10']['value'],
+                'pm10_aqi':     aqi_last['PM10']['aqi'],
+                'o3_value':     aqi_last['O3']['value'],
+                'o3_aqi':       aqi_last['O3']['aqi'],
+                'co_value':     aqi_last['CO']['value'],
+                'co_aqi':       aqi_last['CO']['aqi'],
+                'no2_value':    aqi_last['NO2']['value'],
+                'no2_aqi':      aqi_last['NO2']['aqi'],
+                'so2_value':    aqi_last['SO2']['value'],
+                'so2_aqi':      aqi_last['SO2']['aqi'],
+                **ow,
+                'created_at': created_at,
+            })
+        except (KeyError, TypeError, ValueError, requests.RequestException) as e:
+            # One station's malformed payload or a flaky OpenWeather call (timeout,
+            # 429 rate-limit, missing field) must not blow away the other ~170
+            # stations already fetched in this batch. Skip and retry next run.
+            skipped += 1
+            logging.warning("Skipping station %s due to %s: %s", station_id, type(e).__name__, e)
+
+    total = len(stations)
+    if skipped:
+        logging.warning(f"Ingest completed with {skipped}/{total} station(s) skipped")
+    if total and skipped == total:
+        # Every station hit the same exception (expired API key, AIR4Thai/OpenWeather
+        # outage, a field renamed pipeline-wide, ...) rather than one bad station -
+        # that's a systemic failure, not an isolated one. Raise so the Airflow task
+        # fails loudly (and retries per default_args) instead of silently pushing an
+        # empty DataFrame and logging a green "Ingested 0 rows successfully".
+        raise RuntimeError(f"All {total} station(s) failed to ingest; see warnings above for causes")
 
     return pd.DataFrame(rows)
 
 
 def push_to_supabase(df: pd.DataFrame, table: str = "air_stations"):
+    if df.empty:
+        logging.warning(f"No rows to push to '{table}' (empty ingest result); skipping upsert")
+        return
     records = df.to_dict(orient='records')
     client.table(table).upsert(records, on_conflict='station_id,recorded_at').execute()
     print(f"Pushed {len(records)} rows to '{table}'")

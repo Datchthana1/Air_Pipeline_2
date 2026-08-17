@@ -52,6 +52,25 @@ create index if not exists idx_fact_created
   on fact_air_quality (created_at desc);
 
 
+-- Casts raw TEXT recorded_at (built at ingest time as an unvalidated
+-- f"{date} {time}" string - see ingest.py) to TIMESTAMP without ever
+-- raising: a malformed value comes back NULL instead of aborting the
+-- cross-station UNION ALL this is used in.
+create or replace function safe_timestamp(v text)
+returns timestamp
+language plpgsql
+immutable
+as $$
+begin
+  return v::timestamp;
+exception when others then
+  return null;
+end;
+$$;
+
+grant execute on function safe_timestamp(text) to anon, authenticated, service_role;
+
+
 drop function if exists build_dim_fact();
 
 create or replace function build_dim_fact(
@@ -105,10 +124,10 @@ begin
   execute 'create temp table _src on commit drop as ' || v_union;
 
   if p_mode = 'day' and p_date is not null and p_date <> '' then
-    v_cond := format('s.recorded_at::date = %L', p_date);
+    v_cond := format('safe_timestamp(s.recorded_at)::date = %L', p_date);
   elsif p_mode = 'range' and p_date_from is not null and p_date_from <> ''
                          and p_date_to   is not null and p_date_to   <> '' then
-    v_cond := format('s.recorded_at::date BETWEEN %L AND %L', p_date_from, p_date_to);
+    v_cond := format('safe_timestamp(s.recorded_at)::date BETWEEN %L AND %L', p_date_from, p_date_to);
   elsif p_mode = 'latest' then
     v_cond := 's.created_at = (SELECT MAX(created_at) FROM _src)';
   else
@@ -123,8 +142,8 @@ begin
     select distinct on (s.station_id)
            s.station_id, s.area_th, s.area_en, s.location, s.station_type, s.lat::float, s.lon::float
     from _src s
-    where s.recorded_at is not null and s.recorded_at <> '' and (%s)
-    order by s.station_id, s.recorded_at::timestamp desc
+    where safe_timestamp(s.recorded_at) is not null and (%s)
+    order by s.station_id, safe_timestamp(s.recorded_at) desc
     on conflict (station_id) do update set
       area_th      = excluded.area_th,
       area_en      = excluded.area_en,
@@ -151,9 +170,9 @@ begin
       extract(week    from d)::int,
       extract(isodow  from d) in (6, 7)
     from (
-      select distinct (s.recorded_at::timestamp)::date as d
+      select distinct safe_timestamp(s.recorded_at)::date as d
       from _src s
-      where s.recorded_at is not null and s.recorded_at <> '' and (%s)
+      where safe_timestamp(s.recorded_at) is not null and (%s)
     ) x
     on conflict (date_key) do nothing
   $f$, v_cond);
@@ -171,9 +190,9 @@ begin
     )
     select
       ds.station_key,
-      (to_char(s.recorded_at::timestamp, 'YYYYMMDD'))::int,
+      (to_char(safe_timestamp(s.recorded_at), 'YYYYMMDD'))::int,
       s.station_id,
-      s.recorded_at::timestamp,
+      safe_timestamp(s.recorded_at),
       nullif(s.created_at, '')::timestamp,
       s.aqi, s.aqi_param,
       s.pm25_value, s.pm25_aqi, s.pm10_value, s.pm10_aqi,
@@ -184,7 +203,7 @@ begin
       s.ow_wind_speed, s.ow_wind_deg, s.ow_clouds, s.ow_weather
     from _src s
     join dim_station ds on ds.station_id = s.station_id
-    where s.recorded_at is not null and s.recorded_at <> '' and (%s)
+    where safe_timestamp(s.recorded_at) is not null and (%s)
     on conflict (station_id, recorded_at) do update set
       date_key      = excluded.date_key,
       created_at    = excluded.created_at,
