@@ -1,0 +1,7 @@
+logs/
+homelab/
+.git/
+.claude/
+**/__pycache__/
+*.pyc
+assets/.env
