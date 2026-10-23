@@ -32,6 +32,11 @@ with DAG(
     ),
     schedule=None,
     catchup=False,
+    # LocalExecutor runs DAG runs in parallel; a truncate/full reload must not
+    # overlap the hourly run, so extra triggers queue instead.
+    max_active_runs=1,
+    # a hung run would otherwise keep every later hourly trigger queued
+    dagrun_timeout=timedelta(minutes=50),
     params={
         **reload_params(default_mode="latest"),
         "truncate": Param(

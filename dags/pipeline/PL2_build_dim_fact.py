@@ -22,6 +22,11 @@ with DAG(
     description="Build the star-schema mart (dim_station + dim_date + fact_air_quality) from the per-station tables",
     schedule=None,
     catchup=False,
+    # build_dim_fact locks every station_* table; overlapping runs would just
+    # queue on those locks and eat into statement_timeout.
+    max_active_runs=1,
+    # a hung run would otherwise keep every later hourly trigger queued
+    dagrun_timeout=timedelta(minutes=50),
     params=reload_params(default_mode="latest"),
 ) as dag:
 

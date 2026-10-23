@@ -1,21 +1,101 @@
-version: "3"
+# แยก webserver / scheduler / postgres แทน `airflow standalone` (SQLite + SequentialExecutor)
+# ที่ทำให้ webserver ไม่ตอบ health check ช่วง DAG รันทุกชั่วโมง
+# ค่า secret อ่านจาก ./.env (ดู .env.example)
+x-airflow-common: &airflow-common
+  # build ครั้งเดียวที่ airflow-init แล้ว webserver/scheduler ใช้ image เดียวกัน
+  image: air-pipeline-airflow:local
+  pull_policy: never
+  user: "${AIRFLOW_UID:-50000}:0"
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-airflow}
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:?set AIRFLOW__CORE__FERNET_KEY in .env}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY:?set AIRFLOW__WEBSERVER__SECRET_KEY in .env}
+    AIRFLOW__CORE__PARALLELISM: ${AIRFLOW__CORE__PARALLELISM:-8}
+    AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: ${AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG:-8}
+    AIRFLOW__WEBSERVER__WORKERS: "2"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    # metadata DB ใหม่ = DAG ทุกตัวจะถูก pause ถ้าไม่ตั้งค่านี้ แล้ว PL1/PL2 ที่ถูก trigger จะค้าง queued
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Bangkok
+    AIRFLOW__WEBSERVER__SHOW_TRIGGER_FORM_IF_NO_PARAMS: "True"
+    PYTHONWARNINGS: ignore::SyntaxWarning
+    REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+  extra_hosts:
+    - "db.cmxcszmwgzifybziodup.supabase.co:2406:da14:311:1500:f27a:7530:601b:8284"
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./assets/.env:/opt/airflow/assets/.env
+    - ./logs:/opt/airflow/logs
+
 services:
-  airflow:
-    build: .
+  postgres:
+    image: postgres:16-alpine
     environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__CORE__DEFAULT_TIMEZONE=Asia/Bangkok
-      - AIRFLOW__WEBSERVER__SHOW_TRIGGER_FORM_IF_NO_PARAMS=True
-      - PYTHONWARNINGS=ignore::SyntaxWarning
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-      - SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-    extra_hosts:
-      - "db.cmxcszmwgzifybziodup.supabase.co:2406:da14:311:1500:f27a:7530:601b:8284"
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-airflow}
     volumes:
-      - ./dags:/opt/airflow/dags
-      - ./assets/.env:/opt/airflow/assets/.env
-      - ./logs:/opt/airflow/logs
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # one-shot: migrate DB + สร้าง admin user (entrypoint ของ image ทำให้ และรันซ้ำได้)
+  airflow-init:
+    <<: *airflow-common
+    build: .
+    pull_policy: build
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-admin}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:?set _AIRFLOW_WWW_USER_PASSWORD in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: bash -c "rm -f /opt/airflow/airflow-webserver.pid; exec airflow webserver"
     ports:
       - "8080:8080"
-    command: >
-      bash -c "rm -f /opt/airflow/airflow-webserver.pid && airflow standalone"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres-db-volume:
