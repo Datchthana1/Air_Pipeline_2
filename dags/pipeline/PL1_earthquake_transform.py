@@ -1,7 +1,7 @@
 from datetime import datetime
 from airflow import DAG
 from airflow.decorators import task
-from function.ingest import resolve_reload
+from function.common import resolve_reload
 from function.ingest_earthquake import get_reports, process_reports, push_events_to_supabase
 from function.reload_params import reload_params
 

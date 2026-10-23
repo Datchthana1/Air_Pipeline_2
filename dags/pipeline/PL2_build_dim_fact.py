@@ -1,7 +1,8 @@
 from airflow import DAG
 from airflow.decorators import task
 from datetime import datetime, timedelta
-from function.ingest import build_dim_fact, resolve_reload
+from function.ingest import build_dim_fact
+from function.common import resolve_reload
 from function.reload_params import reload_params
 import pendulum
 import logging

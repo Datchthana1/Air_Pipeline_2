@@ -1,12 +1,15 @@
 from airflow.models.param import Param
 
+from function.common import RELOAD_MODES
+
 
 def reload_params(default_mode: str = "latest", include_station_id: bool = True) -> dict:
+    """Return the Airflow DAG params that drive manual reloads (mode, date window and optional station_id)."""
     params = {
         "reload_mode": Param(
             default=default_mode,
             type="string",
-            enum=["latest", "day", "range", "full"],
+            enum=list(RELOAD_MODES),
             description="latest=snapshot ล่าสุด | day=วันเดียว | range=ช่วงวันที่ | full=ทั้งหมด",
         ),
         "reload_date": Param(default="", type=["null", "string"], description="โหมด day: YYYY-MM-DD"),
@@ -28,9 +31,4 @@ RELOAD_CONF = {
 
 # Same as RELOAD_CONF but without station_id - earthquake events aren't
 # scoped to a station, so that param doesn't exist on the earthquake DAGs.
-EARTHQUAKE_RELOAD_CONF = {
-    "reload_mode": "{{ dag_run.conf.get('reload_mode') or params.reload_mode }}",
-    "reload_date": "{{ dag_run.conf.get('reload_date') or params.reload_date }}",
-    "date_from":   "{{ dag_run.conf.get('date_from')   or params.date_from }}",
-    "date_to":     "{{ dag_run.conf.get('date_to')     or params.date_to }}",
-}
+EARTHQUAKE_RELOAD_CONF = {k: v for k, v in RELOAD_CONF.items() if k != "station_id"}

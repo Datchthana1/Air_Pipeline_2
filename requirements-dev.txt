@@ -1,0 +1,6 @@
+# Test-only deps. Airflow and pendulum are NOT needed: tests/conftest.py stubs airflow.
+pytest>=8.0
+pandas
+requests
+pytz
+python-dotenv

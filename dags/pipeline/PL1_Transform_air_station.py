@@ -3,7 +3,8 @@ from airflow.decorators import task
 from airflow.models.param import Param
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
-from function.ingest import list_stations, transform_station, truncate_all_stations, resolve_reload
+from function.ingest import list_stations, transform_station, truncate_all_stations
+from function.common import resolve_reload
 from function.reload_params import reload_params, RELOAD_CONF
 import pendulum
 import logging

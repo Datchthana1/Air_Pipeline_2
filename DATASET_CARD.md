@@ -133,7 +133,7 @@ linear interpolation over a fixed PM2.5 breakpoint table:
 | 150.1 – 250.0 | 301 – 400 |
 | 250.1 – 500.0 | 401 – 500 |
 
-PM2.5 values above 500.0 clamp to AQI 500; the function returns `None`/0 outside the table.
+PM2.5 values above 500.0 clamp to AQI 500; None input (and, since this refactor, NaN/inf) returns None; values below 0 return 0; above 500 return 500.
 These breakpoints and the 0–500 index range match Thailand's PCD AQI scale for PM2.5, not
 the (differently bucketed) US EPA table — note this if you were expecting literal EPA
 breakpoints. The `aqi`/`pm25_aqi`/etc. columns sourced directly from AIR4Thai are whatever
@@ -157,8 +157,8 @@ Three-stage Airflow pipeline, one DAG per stage, chained via `TriggerDagRunOpera
    Airflow mapped task per station (dynamic task mapping, capped at 5 concurrent) calling
    `transform_station()`, which casts raw text fields to numeric via `safe_numeric(v, lo, hi)`:
    any value that isn't a plain number, or falls outside a hardcoded plausible range
-   (e.g. PM2.5/PM10/O3/CO/NO2 clamped to 0–900, SO2 to 0–600, all AQI sub-indices to 0–500),
-   is nulled rather than propagated or allowed to abort the insert. Output lands in one table
+   (e.g. PM2.5/PM10/O3/CO/NO2 0–900, SO2 0–600, all AQI sub-indices 0–500). Values outside the
+   range are set to NULL, not clamped, so they are never propagated or allowed to abort the insert. Output lands in one table
    per station, `station_<sanitized_id>` (e.g. `station_33t`), upserted on
    `(station_id, recorded_at)`. `PL1_transform_earthquake` deduplicates raw reports into
    `earthquake_events` on `(datetime_utc, lat, lon)`.
@@ -167,6 +167,8 @@ Three-stage Airflow pipeline, one DAG per stage, chained via `TriggerDagRunOpera
    `safe_timestamp()` (malformed timestamp → null row, dropped, rather than aborting the
    union), and upserts into `dim_station` / `dim_date` / `fact_air_quality`. Fact upsert
    conflict key: **`(station_id, recorded_at)`**.
+
+The cleaning rules behind these stages, with the tests and data-quality checks that prove them, are in [docs/DATA_CLEANING.md](docs/DATA_CLEANING.md).
 
 All three stages support a `mode` parameter (`latest` / `day` / `range`) propagated end to
 end via `dag_run.conf`, so a date-range re-run can reprocess already-ingested history through
