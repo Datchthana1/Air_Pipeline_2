@@ -5,6 +5,7 @@ x-airflow-common: &airflow-common
   # build ครั้งเดียวที่ airflow-init แล้ว webserver/scheduler ใช้ image เดียวกัน
   image: air-pipeline-airflow:local
   pull_policy: never
+  mem_limit: 3g
   user: "${AIRFLOW_UID:-50000}:0"
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -32,6 +33,7 @@ x-airflow-common: &airflow-common
 services:
   postgres:
     image: postgres:16-alpine
+    mem_limit: 3g
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-airflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
