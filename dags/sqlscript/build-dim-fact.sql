@@ -89,18 +89,51 @@ declare
   r       record;
   v_union text := '';
   v_cond  text;
+  v_max   text;
   v_count int  := 0;
 begin
-  set local statement_timeout = '300s';
+  -- NOTE: a "set local statement_timeout" here would NOT help when called via
+  -- PostgREST/supabase-py: the API role's ~8s timeout is applied before the
+  -- function starts. The function must simply be fast, so it only reads the
+  -- rows its mode needs instead of copying the whole history.
+  --
+  -- The aqi / aqi_param columns are guaranteed on every station_* table by
+  -- transform_station (which creates them), so no per-call ALTER TABLE
+  -- (ACCESS EXCLUSIVE lock on ~170 tables) is needed here.
 
+  -- Row predicate for the selected mode (same semantics as before).
+  if p_mode = 'day' and p_date is not null and p_date <> '' then
+    v_cond := format('safe_timestamp(recorded_at)::date = %L', p_date);
+  elsif p_mode = 'range' and p_date_from is not null and p_date_from <> ''
+                         and p_date_to   is not null and p_date_to   <> '' then
+    v_cond := format('safe_timestamp(recorded_at)::date BETWEEN %L AND %L', p_date_from, p_date_to);
+  elsif p_mode = 'latest' then
+    -- Target = global MAX(created_at) across all station tables. Computed
+    -- first with one cheap aggregate per table, so only that batch is copied.
+    select string_agg(format('(select max(created_at) from %I)', tablename), ' union all ' order by tablename)
+      into v_union
+    from pg_tables
+    where schemaname = 'public' and tablename like 'station_%';
+    if v_union is null then
+      return 0;
+    end if;
+    execute 'select max(m) from (' || v_union || ') x(m)' into v_max;
+    v_union := '';
+    v_cond := format('created_at = %L', v_max);
+  else
+    v_cond := 'TRUE';
+  end if;
+  if p_station_id is not null and p_station_id <> '' then
+    v_cond := v_cond || format(' AND station_id = %L', p_station_id);
+  end if;
+
+  -- The predicate is pushed into every per-table SELECT, so _src only holds
+  -- the rows that will actually be upserted.
   for r in
     select tablename from pg_tables
     where schemaname = 'public' and tablename like 'station_%'
     order by tablename
   loop
-    execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi NUMERIC',    r.tablename);
-    execute format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS aqi_param TEXT', r.tablename);
-
     if v_union <> '' then
       v_union := v_union || ' UNION ALL ';
     end if;
@@ -114,28 +147,18 @@ begin
              ow_temp, ow_feels_like, ow_humidity, ow_pressure,
              ow_wind_speed, ow_wind_deg, ow_clouds, ow_weather,
              recorded_at, created_at
-      FROM %I$u$, r.tablename);
+      FROM %I WHERE %s$u$, r.tablename, v_cond);
   end loop;
 
   if v_union = '' then
     return 0;
   end if;
 
+  drop table if exists _src;
   execute 'create temp table _src on commit drop as ' || v_union;
 
-  if p_mode = 'day' and p_date is not null and p_date <> '' then
-    v_cond := format('safe_timestamp(s.recorded_at)::date = %L', p_date);
-  elsif p_mode = 'range' and p_date_from is not null and p_date_from <> ''
-                         and p_date_to   is not null and p_date_to   <> '' then
-    v_cond := format('safe_timestamp(s.recorded_at)::date BETWEEN %L AND %L', p_date_from, p_date_to);
-  elsif p_mode = 'latest' then
-    v_cond := 's.created_at = (SELECT MAX(created_at) FROM _src)';
-  else
-    v_cond := 'TRUE';
-  end if;
-  if p_station_id is not null and p_station_id <> '' then
-    v_cond := v_cond || format(' AND s.station_id = %L', p_station_id);
-  end if;
+  -- _src is already filtered; the statements below take all of it.
+  v_cond := 'TRUE';
 
   execute format($f$
     insert into dim_station (station_id, area_th, area_en, location, station_type, lat, lon)
