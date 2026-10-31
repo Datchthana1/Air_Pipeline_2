@@ -1,0 +1,100 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Air & Earthquake Pipeline Workflow",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-air-pipeline-20261031-120000/air-pipeline-workflow.html",
+    "repository": {
+      "url": "https://github.com/Datchthana1/Air_Pipeline_2.git",
+      "provider": "github",
+      "revision": "95517583ef1be49d6196a2bc796ae218e4c22e77"
+    }
+  },
+  "lanes": [
+    { "id": "air", "label": "Air station DAGs" },
+    { "id": "db", "label": "Supabase (Postgres)" },
+    { "id": "eq", "label": "Earthquake DAGs" }
+  ],
+  "phases": [
+    { "id": "fetch", "label": "PL0 Ingest", "fromCol": 0, "toCol": 2 },
+    { "id": "transform", "label": "PL1 Transform", "fromCol": 3, "toCol": 4, "variant": "emphasis" },
+    { "id": "mart", "label": "PL2 Mart", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["air4thai", "ingest_air", "trig_pl1", "transform_station", "trig_pl2", "build"],
+  "nodes": [
+    { "id": "air4thai", "lane": "air", "col": 0, "type": "external", "label": "AIR4Thai + OpenWeather", "sublabel": "stations, air, weather", "width": 150,
+      "sources": [{ "path": "dags/function/ingest.py", "line": 24, "end_line": 26, "label": "API URLs" }] },
+    { "id": "ingest_air", "lane": "air", "col": 1, "type": "backend", "label": "PL0 ingest", "sublabel": "hourly at :45", "tag": "skips bad stations", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL0_ingestion_air_station.py", "line": 21, "end_line": 35, "label": "DAG + schedule" }, { "path": "dags/function/ingest.py", "line": 140, "end_line": 178, "label": "ingest_all" }] },
+    { "id": "trig_pl1", "lane": "air", "col": 2, "type": "messagebus", "label": "Trigger PL1", "sublabel": "passes reload conf", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL0_ingestion_air_station.py", "line": 47, "end_line": 54, "label": "TriggerDagRun" }] },
+    { "id": "transform_station", "lane": "air", "col": 3, "type": "backend", "label": "PL1 per-station", "sublabel": "mapped task, max 5", "tag": "optional truncate", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL1_Transform_air_station.py", "line": 50, "end_line": 93, "label": "truncate, expand" }, { "path": "dags/function/ingest.py", "line": 270, "end_line": 279, "label": "transform_station RPC" }] },
+    { "id": "trig_pl2", "lane": "air", "col": 4, "type": "messagebus", "label": "Trigger PL2", "sublabel": "passes reload conf", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL1_Transform_air_station.py", "line": 82, "end_line": 93, "label": "TriggerDagRun" }] },
+    { "id": "build", "lane": "air", "col": 5, "type": "backend", "label": "PL2 build mart", "sublabel": "build_dim_fact RPC", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL2_build_dim_fact.py", "line": 33, "end_line": 44, "label": "run_build" }, { "path": "dags/function/ingest.py", "line": 258, "end_line": 267, "label": "build_dim_fact" }] },
+
+    { "id": "air_raw", "lane": "db", "col": 1, "type": "database", "label": "air_stations", "sublabel": "raw, upsert", "width": 132,
+      "sources": [{ "path": "dags/function/ingest.py", "line": 181, "end_line": 188, "label": "push_to_supabase" }] },
+    { "id": "eq_raw", "lane": "db", "col": 2, "type": "database", "label": "earthquake_reports_raw", "sublabel": "raw TMD report", "width": 150,
+      "sources": [{ "path": "dags/function/ingest_earthquake.py", "line": 67, "end_line": 74, "label": "push_report" }] },
+    { "id": "station_tables", "lane": "db", "col": 3, "type": "database", "label": "station_* tables", "sublabel": "one per station", "width": 132,
+      "sources": [{ "path": "dags/function/ingest.py", "line": 205, "end_line": 220, "label": "station_* truncate" }] },
+    { "id": "eq_events", "lane": "db", "col": 4, "type": "database", "label": "earthquake_events", "sublabel": "unique events", "width": 132,
+      "sources": [{ "path": "dags/function/ingest_earthquake.py", "line": 241, "end_line": 250, "label": "push_events" }] },
+    { "id": "mart", "lane": "db", "col": 5, "type": "database", "label": "Star-schema mart", "sublabel": "dim_station, dim_date, fact", "width": 150,
+      "sources": [{ "path": "dags/pipeline/PL2_build_dim_fact.py", "line": 19, "end_line": 21, "label": "mart description" }] },
+
+    { "id": "tmd", "lane": "eq", "col": 0, "type": "external", "label": "TMD earthquake API", "sublabel": "DailySeismicEvent", "width": 140,
+      "sources": [{ "path": "dags/function/ingest_earthquake.py", "line": 18, "end_line": 19, "label": "API URL" }] },
+    { "id": "check", "lane": "eq", "col": 1, "type": "security", "label": "Check connections", "sublabel": "TMD + Supabase", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL0_ingestion_earthquake.py", "line": 31, "end_line": 35, "label": "check_connections" }] },
+    { "id": "fetch_push", "lane": "eq", "col": 2, "type": "backend", "label": "Fetch + push report", "sublabel": "PL0 hourly", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL0_ingestion_earthquake.py", "line": 36, "end_line": 53, "label": "fetch, push, chain" }] },
+    { "id": "trig_eq", "lane": "eq", "col": 3, "type": "messagebus", "label": "Trigger PL1", "sublabel": "passes reload conf", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL0_ingestion_earthquake.py", "line": 44, "end_line": 50, "label": "TriggerDagRun" }] },
+    { "id": "eq_transform", "lane": "eq", "col": 4, "type": "backend", "label": "PL1 transform", "sublabel": "parse + dedupe events", "width": 132,
+      "sources": [{ "path": "dags/pipeline/PL1_earthquake_transform.py", "line": 17, "end_line": 27, "label": "fetch, transform" }, { "path": "dags/function/ingest_earthquake.py", "line": 102, "end_line": 119, "label": "get_reports" }] }
+  ],
+  "edges": [
+    { "id": "e-fetch-air", "from": "air4thai", "to": "ingest_air", "label": "HTTP GET" },
+    { "id": "e-ingest-trig", "from": "ingest_air", "to": "trig_pl1", "label": "on success" },
+    { "id": "e-trig-transform", "from": "trig_pl1", "to": "transform_station", "variant": "emphasis" },
+    { "id": "e-transform-trig", "from": "transform_station", "to": "trig_pl2", "variant": "emphasis" },
+    { "id": "e-trig-build", "from": "trig_pl2", "to": "build", "variant": "emphasis" },
+
+    { "id": "e-ingest-raw", "from": "ingest_air", "to": "air_raw", "label": "upsert", "variant": "dashed" },
+    { "id": "e-transform-tables", "from": "transform_station", "to": "station_tables", "label": "RPC", "variant": "dashed" },
+    { "id": "e-build-mart", "from": "build", "to": "mart", "label": "RPC", "variant": "dashed" },
+
+    { "id": "e-tmd-check", "from": "tmd", "to": "check", "label": "probe" },
+    { "id": "e-check-fetch", "from": "check", "to": "fetch_push", "label": "ok" },
+    { "id": "e-fetch-trig", "from": "fetch_push", "to": "trig_eq", "label": "on success" },
+    { "id": "e-trig-eq", "from": "trig_eq", "to": "eq_transform", "variant": "emphasis" },
+
+    { "id": "e-push-raw", "from": "fetch_push", "to": "eq_raw", "label": "insert", "variant": "dashed" },
+    { "id": "e-events", "from": "eq_transform", "to": "eq_events", "label": "upsert", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trigger chain",
+      "items": [
+        "PL0 air runs at minute 45; PL0 earthquake runs hourly",
+        "Each stage triggers the next without waiting for it",
+        "PL1 and PL2 run only when triggered, one run at a time"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Reload window",
+      "items": [
+        "latest, day, range, full modes ride the trigger conf",
+        "AIR4Thai only serves the current reading, so PL0 cannot backfill",
+        "Non-latest modes re-process already ingested rows in PL1 and PL2"
+      ]
+    }
+  ]
+}
