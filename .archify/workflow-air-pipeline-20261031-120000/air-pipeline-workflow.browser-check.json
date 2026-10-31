@@ -1,0 +1,1273 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "browser-check",
+  "evidenceKind": "automated-browser",
+  "status": "pass",
+  "visualReview": "not-requested",
+  "provenance": "current",
+  "deliveryReceiptId": "c14257c2-e6e9-420a-aa33-637a6d70afa5",
+  "artifact": {
+    "path": "/Users/dechthanaarunchaiya/Desktop/OneFile/personal-repo/Air_Pipeline2/.archify/workflow-air-pipeline-20261031-120000/air-pipeline-workflow.html",
+    "sha256": "9bba36a4b0751bec9dcb821059b4895c203bafe1a6d335d52ca19946551f1b85",
+    "bytes": 777306
+  },
+  "state": {
+    "detail": "read",
+    "motion": "still"
+  },
+  "chrome": {
+    "status": "available",
+    "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  },
+  "diagnostics": [],
+  "containment": {
+    "status": "pass",
+    "policy": "fit-or-reader-declared-readable-vertical-scroll",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1376,
+        "diagramWidth": 1346,
+        "pageComposition": {
+          "bodyPaddingPx": 12,
+          "headerPx": 52,
+          "diagramChromePx": 78,
+          "svgPx": 633,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 126,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 81,
+            "spaceAboveNodesPx": 40,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1600,
+        "height": 1000,
+        "theme": "light",
+        "innerWidth": 1600,
+        "innerHeight": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1536,
+        "diagramWidth": 1506,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 708,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 141,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 90,
+            "spaceAboveNodesPx": 45,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 858,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 170,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 109,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 6
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "theme": "light",
+        "innerWidth": 2048,
+        "innerHeight": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1920,
+        "diagramWidth": 1870,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 68,
+          "diagramChromePx": 94,
+          "svgPx": 879,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 174,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 112,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 7
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 44,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      }
+    ]
+  },
+  "themeStates": {
+    "status": "pass",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "requestedTheme": "light",
+        "resolvedTheme": "light",
+        "ok": true
+      },
+      {
+        "width": 1600,
+        "height": 1000,
+        "requestedTheme": "light",
+        "resolvedTheme": "light",
+        "ok": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "requestedTheme": "light",
+        "resolvedTheme": "light",
+        "ok": true
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "requestedTheme": "light",
+        "resolvedTheme": "light",
+        "ok": true
+      },
+      {
+        "width": 1440,
+        "height": 900,
+        "requestedTheme": "dark",
+        "resolvedTheme": "dark",
+        "ok": true
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "requestedTheme": "dark",
+        "resolvedTheme": "dark",
+        "ok": true
+      }
+    ]
+  },
+  "readability": {
+    "status": "pass",
+    "minimumProjectedNodeTextPx": 6,
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1376,
+        "diagramWidth": 1346,
+        "pageComposition": {
+          "bodyPaddingPx": 12,
+          "headerPx": 52,
+          "diagramChromePx": 78,
+          "svgPx": 633,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 126,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 81,
+            "spaceAboveNodesPx": 40,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1600,
+        "height": 1000,
+        "theme": "light",
+        "innerWidth": 1600,
+        "innerHeight": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1536,
+        "diagramWidth": 1506,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 708,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 141,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 90,
+            "spaceAboveNodesPx": 45,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 858,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 170,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 109,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 6
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "theme": "light",
+        "innerWidth": 2048,
+        "innerHeight": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1920,
+        "diagramWidth": 1870,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 68,
+          "diagramChromePx": 94,
+          "svgPx": 879,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 174,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 112,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 7
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 44,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      }
+    ]
+  },
+  "viewerChrome": {
+    "status": "pass",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1376,
+        "diagramWidth": 1346,
+        "pageComposition": {
+          "bodyPaddingPx": 12,
+          "headerPx": 52,
+          "diagramChromePx": 78,
+          "svgPx": 633,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 126,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 81,
+            "spaceAboveNodesPx": 40,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 126,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 62,
+            "spaceAboveNodesPx": 50,
+            "spaceBelowNodesPx": 14
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1600,
+        "height": 1000,
+        "theme": "light",
+        "innerWidth": 1600,
+        "innerHeight": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1536,
+        "diagramWidth": 1506,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 708,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 141,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 90,
+            "spaceAboveNodesPx": 45,
+            "spaceBelowNodesPx": 5
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 141,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 69,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 16
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 60,
+          "diagramChromePx": 84,
+          "svgPx": 858,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 170,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 109,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 6
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 170,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 84,
+            "spaceAboveNodesPx": 68,
+            "spaceBelowNodesPx": 19
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 54,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "theme": "light",
+        "innerWidth": 2048,
+        "innerHeight": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "overflowX": false,
+        "overflowY": false,
+        "verticalScrollAccepted": false,
+        "overflowDisposition": "contained",
+        "readerLayout": "adaptive",
+        "readerOverflow": null,
+        "readerFit": null,
+        "ok": true,
+        "readerWidth": 1920,
+        "diagramWidth": 1870,
+        "pageComposition": {
+          "bodyPaddingPx": 64,
+          "headerPx": 68,
+          "diagramChromePx": 94,
+          "svgPx": 879,
+          "cardsPx": 0,
+          "viewBoxHeight": 534
+        },
+        "viewBoxWidth": 1136,
+        "workflowLanes": [
+          {
+            "frameId": "lane-0",
+            "heightPx": 174,
+            "nodeCount": 6,
+            "nodeIds": [
+              "air4thai",
+              "ingest_air",
+              "trig_pl1",
+              "transform_station",
+              "trig_pl2",
+              "build"
+            ],
+            "nodeSpanPx": 112,
+            "spaceAboveNodesPx": 56,
+            "spaceBelowNodesPx": 7
+          },
+          {
+            "frameId": "lane-1",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "air_raw",
+              "eq_raw",
+              "station_tables",
+              "eq_events",
+              "mart"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          },
+          {
+            "frameId": "lane-2",
+            "heightPx": 174,
+            "nodeCount": 5,
+            "nodeIds": [
+              "tmd",
+              "check",
+              "fetch_push",
+              "trig_eq",
+              "eq_transform"
+            ],
+            "nodeSpanPx": 86,
+            "spaceAboveNodesPx": 69,
+            "spaceBelowNodesPx": 20
+          }
+        ],
+        "minimumProjectedNodeTextPx": 8,
+        "minimumProjectedNonEdgeTextPx": 8,
+        "minimumProjectedEdgeTextPx": 8,
+        "minimumProjectedNodeText": "stations, air, weather",
+        "minimumProjectedNodeTextDetail": "context",
+        "minimumProjectedNodeTextOwner": {
+          "kind": "node",
+          "id": "air4thai"
+        },
+        "minimumRequiredNodeTextPx": 6,
+        "readabilityOk": true,
+        "hasLegend": true,
+        "hasNavigationDock": true,
+        "legendDockIntersectionArea": 0,
+        "dockStageIntersectionArea": 0,
+        "dockStageGap": 10,
+        "requiredDockStageGap": 10,
+        "viewerChromeStageOk": true,
+        "viewerChromeReserve": 44,
+        "viewerChromeActive": true,
+        "viewerChromeOk": true,
+        "resolvedTheme": "light"
+      }
+    ]
+  },
+  "captures": {
+    "status": "not-requested",
+    "screenshots": [],
+    "contactSheet": null
+  },
+  "sidecars": {
+    "receipt": "air-pipeline-workflow.browser-check.json",
+    "files": []
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c14257c2-e6e9-420a-aa33-637a6d70afa5",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/dechthanaarunchaiya/Desktop/OneFile/personal-repo/Air_Pipeline2/.archify/workflow-air-pipeline-20261031-120000/candidate.json",
+  "output": "/Users/dechthanaarunchaiya/Desktop/OneFile/personal-repo/Air_Pipeline2/.archify/workflow-air-pipeline-20261031-120000/air-pipeline-workflow.html",
+  "specification": {
+    "sha256": "1a5afab4ddd2009fc8bf659988d60369ca4d603837851dd48805dfc775d07a44",
+    "bytes": 7787
+  },
+  "artifact": {
+    "sha256": "9bba36a4b0751bec9dcb821059b4895c203bafe1a6d335d52ca19946551f1b85",
+    "bytes": 777306
+  }
+}
